@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChefHat, Camera, Users, X, Check, Trash2, Plus, Edit2 } from 'lucide-react';
+import { ChefHat, Camera, Users, X, Check, Trash2, Plus, Edit2, FileText, Eye } from 'lucide-react';
 import axios from 'axios';
 
 interface JobApplication {
@@ -35,6 +35,7 @@ const JobManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAddingJob, setIsAddingJob] = useState(false);
   const [editingJob, setEditingJob] = useState<JobListing | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
   const [newJob, setNewJob] = useState<JobListing>({
     id: '',
     title: '',
@@ -160,6 +161,28 @@ const JobManagement = () => {
     }
   };
 
+  const handleViewResume = (application: JobApplication) => {
+    if (application.resume) {
+      // Create a Blob from the base64 data
+      const byteCharacters = atob(application.resume);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+      // Create a URL for the Blob
+      const fileURL = URL.createObjectURL(blob);
+
+      // Open in a new tab
+      window.open(fileURL, '_blank');
+
+      // Clean up the URL after a delay
+      setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -271,14 +294,15 @@ const JobManagement = () => {
                           Rejected
                         </span>
                       )}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedApplication(application)}
+                        className="p-2 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500/20 transition-colors"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </motion.button>
                     </div>
-                  </div>
-                  <div className="mt-4 text-sm text-neutral-400">
-                    <p>Email: {application.email}</p>
-                    <p>Phone: {application.phone}</p>
-                    <p>Age: {application.experience}</p>
-                    {application.address && <p>Address: {application.address}</p>}
-                    <p>Applied: {new Date(application.appliedDate).toLocaleDateString()}</p>
                   </div>
                 </motion.div>
               );
@@ -363,6 +387,99 @@ const JobManagement = () => {
           </div>
         )}
 
+        {/* Application Details Modal */}
+        <AnimatePresence>
+          {selectedApplication && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setSelectedApplication(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-neutral-900 rounded-xl p-6 max-w-2xl w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold">Application Details</h3>
+                  <button
+                    onClick={() => setSelectedApplication(null)}
+                    className="text-neutral-400 hover:text-white"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-400">Position</h4>
+                    <p className="text-lg">{getJobTitle(selectedApplication.jobId)}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-400">Applicant Name</h4>
+                    <p className="text-lg">{selectedApplication.name}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-400">Contact Information</h4>
+                    <p className="text-lg">{selectedApplication.email}</p>
+                    <p className="text-lg">{selectedApplication.phone}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-400">Age</h4>
+                    <p className="text-lg">{selectedApplication.experience}</p>
+                  </div>
+
+                  {selectedApplication.address && (
+                    <div>
+                      <h4 className="text-sm font-medium text-neutral-400">Address</h4>
+                      <p className="text-lg">{selectedApplication.address}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-400">Application Date</h4>
+                    <p className="text-lg">{new Date(selectedApplication.appliedDate).toLocaleDateString()}</p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-neutral-400">Status</h4>
+                    <p className={`text-lg ${
+                      selectedApplication.status === 'approved' ? 'text-green-500' :
+                      selectedApplication.status === 'rejected' ? 'text-red-500' :
+                      'text-yellow-500'
+                    }`}>
+                      {selectedApplication.status.charAt(0).toUpperCase() + selectedApplication.status.slice(1)}
+                    </p>
+                  </div>
+
+                  {selectedApplication.resume && (
+                    <div>
+                      <h4 className="text-sm font-medium text-neutral-400 mb-2">Resume</h4>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleViewResume(selectedApplication)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500/20 transition-colors"
+                      >
+                        <FileText className="h-5 w-5" />
+                        View Resume
+                      </motion.button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Add/Edit Job Modal */}
         <AnimatePresence>
           {isAddingJob && (
             <motion.div

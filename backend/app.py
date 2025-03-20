@@ -64,6 +64,48 @@ latest_works_collection = db["latest_works"]
 job_applications_collection = db["job_applications"]
 job_listings_collection = db["job_listings"]
 
+# Initialize FastMail
+fm = FastMail(email_conf)
+
+async def send_acceptance_email(applicant_name: str, applicant_email: str):
+    # Create the email content
+    subject = "Welcome to E&S Decorations!"
+    
+    # HTML version of the email
+    html_content = f"""
+    <p>Dear {applicant_name},</p>
+    <p>Thank you for your interest in E&S Decorations. After reviewing your application, we are pleased to offer you a position on our team!</p>
+    <p>Our recruiting team will be in touch soon with the next steps, including contract signing, onboarding details, and your official start date. If you have any questions, feel free to reach out.</p>
+    <p>We look forward to working with you!</p>
+    <p>Best regards,<br>E&S Decorations Recruiting Team</p>
+    """
+    
+    # Plain text version of the email
+    plain_text = f"""
+    Dear {applicant_name},
+
+    Thank you for your interest in E&S Decorations. After reviewing your application, we are pleased to offer you a position on our team!
+
+    Our recruiting team will be in touch soon with the next steps, including contract signing, onboarding details, and your official start date. If you have any questions, feel free to reach out.
+
+    We look forward to working with you!
+
+    Best regards,
+    E&S Decorations Recruiting Team
+    """
+
+    # Create message schema
+    message = MessageSchema(
+        subject=subject,
+        recipients=[applicant_email],
+        body=html_content,
+        subtype="html",
+        alternatives=[(plain_text, "plain")]
+    )
+
+    # Send the email
+    await fm.send_message(message)
+
 # Models
 class EmailSchema(BaseModel):
     message: str
@@ -545,17 +587,27 @@ async def submit_job_application(application: JobApplication):
 @app.patch("/job-applications/{application_id}/status")
 async def update_application_status(application_id: str, status: str):
     try:
-        if status not in ["approved", "rejected"]:
-            raise HTTPException(status_code=400, detail="Invalid status")
-            
+        # First get the application to access the applicant's details
+        application = await job_applications_collection.find_one({"_id": ObjectId(application_id)})
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        # Update the status
         result = await job_applications_collection.update_one(
             {"_id": ObjectId(application_id)},
             {"$set": {"status": status}}
         )
-        
+
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Application not found")
-            
+
+        # If the application is approved, send the acceptance email
+        if status == "approved":
+            await send_acceptance_email(
+                applicant_name=application["name"],
+                applicant_email=application["email"]
+            )
+
         return {"message": f"Application {status} successfully"}
     except errors.InvalidId:
         raise HTTPException(status_code=400, detail="Invalid application ID")
