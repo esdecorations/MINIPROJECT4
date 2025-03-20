@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from pydantic import BaseModel, EmailStr
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,12 +11,13 @@ from jose import jwt, JWTError
 import datetime
 from bson import ObjectId, errors
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from typing import List
+from typing import List, Optional
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 import logging
+import base64
 
 # Load environment variables
 load_dotenv()
@@ -61,7 +62,7 @@ admins_collection = db["admins"]
 faqs_collection = db["faqs"]
 latest_works_collection = db["latest_works"]
 job_applications_collection = db["job_applications"]
-job_listings_collection = db["job_listings"]  # New collection for job listings
+job_listings_collection = db["job_listings"]
 
 # Models
 class EmailSchema(BaseModel):
@@ -115,8 +116,8 @@ class JobApplication(BaseModel):
     email: str
     phone: str
     experience: str
-    address: str | None = None
-    resume: str | None = None
+    address: Optional[str] = None
+    resume: Optional[str] = None  # Base64 encoded string for the resume
     status: str = "pending"  # pending, approved, rejected
     appliedDate: str
 
@@ -502,6 +503,9 @@ async def get_job_applications():
         # Convert ObjectId to string for each application
         for app in applications:
             app["_id"] = str(app["_id"])
+            # If resume is bytes, convert to base64 string
+            if isinstance(app.get("resume"), bytes):
+                app["resume"] = base64.b64encode(app["resume"]).decode('utf-8')
         return applications
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -509,9 +513,16 @@ async def get_job_applications():
 @app.post("/job-applications")
 async def submit_job_application(application: JobApplication):
     try:
-        # Add current date to application
+        # Convert application to dict and handle the resume
         application_dict = application.dict()
-        application_dict["appliedDate"] = datetime.datetime.now().isoformat()
+        
+        # If resume is provided as base64 string, decode it
+        if application.resume and isinstance(application.resume, str):
+            try:
+                resume_bytes = base64.b64decode(application.resume)
+                application_dict["resume"] = resume_bytes
+            except:
+                raise HTTPException(status_code=400, detail="Invalid resume format")
         
         # Insert application into database
         result = await job_applications_collection.insert_one(application_dict)
@@ -522,6 +533,9 @@ async def submit_job_application(application: JobApplication):
                 {"_id": result.inserted_id}
             )
             created_application["_id"] = str(created_application["_id"])
+            # Convert resume back to base64 if it exists
+            if isinstance(created_application.get("resume"), bytes):
+                created_application["resume"] = base64.b64encode(created_application["resume"]).decode('utf-8')
             return created_application
         
         raise HTTPException(status_code=500, detail="Failed to submit application")

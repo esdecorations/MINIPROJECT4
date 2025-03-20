@@ -22,9 +22,12 @@ interface JobApplication {
   email: string;
   phone: string;
   experience: string;
-  resume?: File;
+  resume?: string;
   address?: string;
 }
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
 const CareersPage = () => {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
@@ -43,6 +46,7 @@ const CareersPage = () => {
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
+  const [fileError, setFileError] = useState<string>('');
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -115,10 +119,51 @@ const CareersPage = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, resume: e.target.files[0] });
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFileError('');
+    const file = e.target.files?.[0];
+    
+    if (file) {
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        setFileError('File size must be less than 5MB');
+        e.target.value = ''; // Clear the input
+        return;
+      }
+
+      // Check file type
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        setFileError('Only PDF and Word documents are allowed');
+        e.target.value = ''; // Clear the input
+        return;
+      }
+
+      try {
+        // Convert file to base64
+        const base64String = await convertFileToBase64(file);
+        setFormData({ ...formData, resume: base64String });
+      } catch (error) {
+        console.error('Error converting file:', error);
+        setFileError('Error processing file. Please try again.');
+      }
     }
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+          const base64String = reader.result.split(',')[1];
+          resolve(base64String);
+        } else {
+          reject(new Error('Failed to convert file to base64'));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   if (loading) {
@@ -319,6 +364,9 @@ const CareersPage = () => {
                       onChange={handleFileChange}
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
                     />
+                    {fileError && (
+                      <p className="mt-1 text-sm text-red-500">{fileError}</p>
+                    )}
                   </div>
                 )}
 
