@@ -63,9 +63,88 @@ faqs_collection = db["faqs"]
 latest_works_collection = db["latest_works"]
 job_applications_collection = db["job_applications"]
 job_listings_collection = db["job_listings"]
+events_collection = db["events"]  # New collection for events
 
 # Initialize FastMail
 fm = FastMail(email_conf)
+
+# Event Models
+class EventBase(BaseModel):
+    title: str
+    description: str
+    date: str
+    time: str
+    location: str
+    status: str = "upcoming"  # upcoming, completed, cancelled
+    highlights: List[str]
+
+class EventCreate(EventBase):
+    pass
+
+class EventUpdate(EventBase):
+    pass
+
+class EventInDB(EventBase):
+    id: str
+
+# Event Management Endpoints
+@app.get("/events")
+async def get_events():
+    try:
+        events = await events_collection.find().to_list(length=None)
+        # Convert ObjectId to string for each event
+        for event in events:
+            event["_id"] = str(event["_id"])
+        return events
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/events")
+async def create_event(event: EventCreate):
+    try:
+        result = await events_collection.insert_one(event.dict())
+        if result.inserted_id:
+            created_event = await events_collection.find_one(
+                {"_id": result.inserted_id}
+            )
+            created_event["_id"] = str(created_event["_id"])
+            return created_event
+        raise HTTPException(status_code=500, detail="Failed to create event")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/events/{event_id}")
+async def update_event(event_id: str, event: EventUpdate):
+    try:
+        result = await events_collection.update_one(
+            {"_id": ObjectId(event_id)},
+            {"$set": event.dict()}
+        )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Event not found")
+        updated_event = await events_collection.find_one(
+            {"_id": ObjectId(event_id)}
+        )
+        updated_event["_id"] = str(updated_event["_id"])
+        return updated_event
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid event ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/events/{event_id}")
+async def delete_event(event_id: str):
+    try:
+        result = await events_collection.delete_one(
+            {"_id": ObjectId(event_id)}
+        )
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Event not found")
+        return {"message": "Event deleted successfully"}
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid event ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 async def send_acceptance_email(applicant_name: str, applicant_email: str):
     # Create the email content
@@ -195,112 +274,6 @@ async def get_current_admin(token: str = Depends(oauth2_scheme)):
         return {"email": email}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
-# Latest Works Endpoints
-@app.get("/latest-works")
-async def get_latest_works():
-    try:
-        works = await latest_works_collection.find().to_list(length=None)
-        # Convert ObjectId to string for each work
-        for work in works:
-            work["_id"] = str(work["_id"])
-        return works
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/latest-works")
-async def create_latest_work(work: LatestWork):
-    try:
-        result = await latest_works_collection.insert_one(work.dict())
-        if result.inserted_id:
-            created_work = await latest_works_collection.find_one({"_id": result.inserted_id})
-            created_work["_id"] = str(created_work["_id"])
-            return created_work
-        raise HTTPException(status_code=500, detail="Failed to create work")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/latest-works/{work_id}")
-async def update_latest_work(work_id: str, work: LatestWork):
-    try:
-        result = await latest_works_collection.update_one(
-            {"_id": ObjectId(work_id)},
-            {"$set": work.dict()}
-        )
-        if result.modified_count == 0:
-            raise HTTPException(status_code=404, detail="Work not found")
-        updated_work = await latest_works_collection.find_one({"_id": ObjectId(work_id)})
-        updated_work["_id"] = str(updated_work["_id"])
-        return updated_work
-    except errors.InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid work ID")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/latest-works/{work_id}")
-async def delete_latest_work(work_id: str):
-    try:
-        result = await latest_works_collection.delete_one({"_id": ObjectId(work_id)})
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Work not found")
-        return {"message": "Work deleted successfully"}
-    except errors.InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid work ID")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# FAQ Management Endpoints
-@app.get("/faqs")
-async def get_faqs():
-    try:
-        faqs = await faqs_collection.find().to_list(length=None)
-        # Convert ObjectId to string for each FAQ
-        for faq in faqs:
-            faq["_id"] = str(faq["_id"])
-        return faqs
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/faqs")
-async def create_faq(faq: FAQ):
-    try:
-        result = await faqs_collection.insert_one(faq.dict())
-        if result.inserted_id:
-            created_faq = await faqs_collection.find_one({"_id": result.inserted_id})
-            created_faq["_id"] = str(created_faq["_id"])
-            return created_faq
-        raise HTTPException(status_code=500, detail="Failed to create FAQ")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/faqs/{faq_id}")
-async def update_faq(faq_id: str, faq: FAQ):
-    try:
-        result = await faqs_collection.update_one(
-            {"_id": ObjectId(faq_id)},
-            {"$set": faq.dict()}
-        )
-        if result.modified_count == 0:
-            raise HTTPException(status_code=404, detail="FAQ not found")
-        updated_faq = await faqs_collection.find_one({"_id": ObjectId(faq_id)})
-        updated_faq["_id"] = str(updated_faq["_id"])
-        return updated_faq
-    except errors.InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid FAQ ID")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/faqs/{faq_id}")
-async def delete_faq(faq_id: str):
-    try:
-        result = await faqs_collection.delete_one({"_id": ObjectId(faq_id)})
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="FAQ not found")
-        return {"message": "FAQ deleted successfully"}
-    except errors.InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid FAQ ID")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 # Submit Contact Form
 @app.post("/submit")
@@ -611,5 +584,111 @@ async def update_application_status(application_id: str, status: str):
         return {"message": f"Application {status} successfully"}
     except errors.InvalidId:
         raise HTTPException(status_code=400, detail="Invalid application ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# FAQ Endpoints
+@app.get("/faqs")
+async def get_faqs():
+    try:
+        faqs = await faqs_collection.find().to_list(length=None)
+        # Convert ObjectId to string for each FAQ
+        for faq in faqs:
+            faq["_id"] = str(faq["_id"])
+        return faqs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/faqs")
+async def create_faq(faq: FAQ):
+    try:
+        result = await faqs_collection.insert_one(faq.dict())
+        if result.inserted_id:
+            created_faq = await faqs_collection.find_one({"_id": result.inserted_id})
+            created_faq["_id"] = str(created_faq["_id"])
+            return created_faq
+        raise HTTPException(status_code=500, detail="Failed to create FAQ")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/faqs/{faq_id}")
+async def update_faq(faq_id: str, faq: FAQ):
+    try:
+        result = await faqs_collection.update_one(
+            {"_id": ObjectId(faq_id)},
+            {"$set": faq.dict()}
+        )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="FAQ not found")
+        updated_faq = await faqs_collection.find_one({"_id": ObjectId(faq_id)})
+        updated_faq["_id"] = str(updated_faq["_id"])
+        return updated_faq
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid FAQ ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/faqs/{faq_id}")
+async def delete_faq(faq_id: str):
+    try:
+        result = await faqs_collection.delete_one({"_id": ObjectId(faq_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="FAQ not found")
+        return {"message": "FAQ deleted successfully"}
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid FAQ ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Latest Works Endpoints
+@app.get("/latest-works")
+async def get_latest_works():
+    try:
+        works = await latest_works_collection.find().to_list(length=None)
+        # Convert ObjectId to string for each work
+        for work in works:
+            work["_id"] = str(work["_id"])
+        return works
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/latest-works")
+async def create_latest_work(work: LatestWork):
+    try:
+        result = await latest_works_collection.insert_one(work.dict())
+        if result.inserted_id:
+            created_work = await latest_works_collection.find_one({"_id": result.inserted_id})
+            created_work["_id"] = str(created_work["_id"])
+            return created_work
+        raise HTTPException(status_code=500, detail="Failed to create work")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/latest-works/{work_id}")
+async def update_latest_work(work_id: str, work: LatestWork):
+    try:
+        result = await latest_works_collection.update_one(
+            {"_id": ObjectId(work_id)},
+            {"$set": work.dict()}
+        )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Work not found")
+        updated_work = await latest_works_collection.find_one({"_id": ObjectId(work_id)})
+        updated_work["_id"] = str(updated_work["_id"])
+        return updated_work
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid work ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/latest-works/{work_id}")
+async def delete_latest_work(work_id: str):
+    try:
+        result = await latest_works_collection.delete_one({"_id": ObjectId(work_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Work not found")
+        return {"message": "Work deleted successfully"}
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid work ID")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
