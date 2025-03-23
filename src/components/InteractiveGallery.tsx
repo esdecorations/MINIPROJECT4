@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, X, Calendar, MapPin, Users } from 'lucide-react';
+import axios from 'axios';
 
 interface GalleryEvent {
-  id: number;
+  _id: string;
   title: string;
   description: string;
   date: string;
@@ -13,110 +14,32 @@ interface GalleryEvent {
   thumbnail: string;
   images: string[];
   details: string;
+  highlights: string[];
 }
-
-const events: GalleryEvent[] = [
-  {
-    id: 1,
-    title: "Corporate Leadership Summit",
-    description: "Annual gathering of industry leaders",
-    date: "March 15, 2024",
-    location: "Grand Convention Center",
-    attendees: 500,
-    category: "Corporate",
-    thumbnail: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069",
-    images: [
-      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069",
-      "https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=2070",
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070"
-    ],
-    details: "Our annual Corporate Leadership Summit brought together 500+ executives from Fortune 500 companies for a day of insightful discussions, networking, and strategic planning. The event featured keynote speeches from industry pioneers, interactive workshops, and exclusive networking sessions designed to foster collaboration and innovation across sectors."
-  },
-  {
-    id: 2,
-    title: "Tech Innovation Conference",
-    description: "Showcasing the future of technology",
-    date: "February 28, 2024",
-    location: "Tech Hub Center",
-    attendees: 750,
-    category: "Technology",
-    thumbnail: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070",
-    images: [
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070",
-      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070",
-      "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=2012"
-    ],
-    details: "The Tech Innovation Conference showcased cutting-edge technologies and groundbreaking solutions from startups and established tech giants alike. Attendees experienced hands-on demonstrations of the latest AI applications, immersive VR experiences, and participated in thought-provoking panel discussions about the ethical implications of emerging technologies."
-  },
-  {
-    id: 3,
-    title: "Elegant Wedding Celebration",
-    description: "A magical day of love and celebration",
-    date: "April 10, 2024",
-    location: "Seaside Resort",
-    attendees: 200,
-    category: "Wedding",
-    thumbnail: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070",
-    images: [
-      "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070",
-      "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?q=80&w=2070",
-      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069"
-    ],
-    details: "This breathtaking seaside wedding combined elegant décor with natural beauty, creating an unforgettable celebration of love. From the custom floral arrangements to the personalized lighting design, every detail was meticulously crafted to reflect the couple's unique story and style. The evening concluded with a spectacular fireworks display over the ocean."
-  },
-  {
-    id: 4,
-    title: "Fashion Week Showcase",
-    description: "Celebrating style and creativity",
-    date: "May 5, 2024",
-    location: "Metropolitan Gallery",
-    attendees: 350,
-    category: "Fashion",
-    thumbnail: "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2076",
-    images: [
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2076",
-      "https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070",
-      "https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?q=80&w=2065"
-    ],
-    details: "Our Fashion Week Showcase transformed the Metropolitan Gallery into a runway of innovation and style. Featuring collections from both established designers and emerging talents, the event celebrated diversity and sustainability in fashion. The immersive experience included interactive installations, live music performances, and exclusive after-parties that continued the celebration of creativity."
-  },
-  {
-    id: 5,
-    title: "Music Festival Experience",
-    description: "Three days of incredible performances",
-    date: "June 15-17, 2024",
-    location: "Riverside Park",
-    attendees: 5000,
-    category: "Entertainment",
-    thumbnail: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2070",
-    images: [
-      "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2070",
-      "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?q=80&w=2070",
-      "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=2070"
-    ],
-    details: "The Riverside Music Festival brought together over 30 artists across 4 stages for an unforgettable weekend of music and community. Beyond the performances, attendees enjoyed curated food experiences, interactive art installations, and wellness activities. Our sustainable event management practices ensured minimal environmental impact while maximizing the festival experience."
-  },
-  {
-    id: 6,
-    title: "Product Launch Gala",
-    description: "Unveiling innovation with style",
-    date: "July 8, 2024",
-    location: "Innovation Center",
-    attendees: 300,
-    category: "Corporate",
-    thumbnail: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=2012",
-    images: [
-      "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=2012",
-      "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?q=80&w=2070",
-      "https://images.unsplash.com/photo-1560523159-4a9692d222f9?q=80&w=2070"
-    ],
-    details: "This exclusive product launch transformed the Innovation Center into an immersive brand experience that captivated industry influencers and media representatives. The event featured choreographed product reveals, interactive demonstration stations, and a carefully curated sensory journey that reinforced the brand's identity and the product's unique value proposition."
-  }
-];
 
 const InteractiveGallery = () => {
   const [selectedEvent, setSelectedEvent] = useState<GalleryEvent | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [events, setEvents] = useState<GalleryEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/events');
+        setEvents(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+        setError('Failed to load events. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const openEventDetails = (event: GalleryEvent) => {
     setSelectedEvent(event);
@@ -139,6 +62,28 @@ const InteractiveGallery = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <section className="py-10 bg-black text-white">
+        <div className="container-width flex justify-center items-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-10 bg-black text-white">
+        <div className="container-width">
+          <div className="text-center text-red-500 py-20">
+            {error}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-10 bg-black text-white">
       <div className="container-width">
@@ -156,40 +101,46 @@ const InteractiveGallery = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event, index) => (
-            <motion.div
-              key={event.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -10 }}
-              className="group cursor-pointer"
-              onClick={() => openEventDetails(event)}
-            >
-              <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl overflow-hidden hover:border-neutral-700 transition-colors">
-                <div className="relative h-64 overflow-hidden">
-                  <img
-                    src={event.thumbnail}
-                    alt={event.title}
-                    className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute top-4 right-4 bg-white/80 text-gray-800 px-3 py-1 rounded-full text-sm">
-                    {event.category}
+        {events.length === 0 ? (
+          <div className="text-center text-neutral-400 py-10">
+            No events available at the moment.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((event, index) => (
+              <motion.div
+                key={event._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ y: -10 }}
+                className="group cursor-pointer"
+                onClick={() => openEventDetails(event)}
+              >
+                <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl overflow-hidden hover:border-neutral-700 transition-colors">
+                  <div className="relative h-64 overflow-hidden">
+                    <img
+                      src={event.thumbnail}
+                      alt={event.title}
+                      className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute top-4 right-4 bg-white/80 text-gray-800 px-3 py-1 rounded-full text-sm">
+                      {event.category}
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
+                    <p className="text-neutral-400 mb-4">{event.description}</p>
+                    <div className="flex justify-between items-center text-sm text-neutral-500">
+                      <span>{event.date}</span>
+                      <span>{event.location}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
-                  <p className="text-neutral-400 mb-4">{event.description}</p>
-                  <div className="flex justify-between items-center text-sm text-neutral-500">
-                    <span>{event.date}</span>
-                    <span>{event.location}</span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Event Details Modal */}
@@ -270,6 +221,16 @@ const InteractiveGallery = () => {
                     <div className="md:w-2/3">
                       <h2 className="text-3xl font-bold mb-4">{selectedEvent.title}</h2>
                       <p className="text-neutral-300 mb-6">{selectedEvent.details}</p>
+                      {selectedEvent.highlights && selectedEvent.highlights.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="text-lg font-semibold mb-2">Event Highlights</h4>
+                          <ul className="list-disc list-inside text-neutral-400">
+                            {selectedEvent.highlights.map((highlight, index) => (
+                              <li key={index}>{highlight}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
 
                     <div className="md:w-1/3 bg-neutral-800/50 rounded-xl p-6 space-y-4">

@@ -18,6 +18,8 @@ from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 import logging
 import base64
+import io
+from PIL import Image
 
 # Load environment variables
 load_dotenv()
@@ -85,6 +87,26 @@ class EventUpdate(EventBase):
     pass
 
 class EventInDB(EventBase):
+    id: str
+
+class GalleryEventBase(BaseModel):
+    title: str
+    description: str
+    date: str
+    location: str
+    attendees: int
+    category: str
+    thumbnail: str
+    images: List[str]
+    details: str
+
+class GalleryEventCreate(GalleryEventBase):
+    pass
+
+class GalleryEventUpdate(GalleryEventBase):
+    pass
+
+class GalleryEventInDB(GalleryEventBase):
     id: str
 
 # Event Management Endpoints
@@ -690,5 +712,96 @@ async def delete_latest_work(work_id: str):
         return {"message": "Work deleted successfully"}
     except errors.InvalidId:
         raise HTTPException(status_code=400, detail="Invalid work ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# New image upload endpoint
+@app.post("/upload-image")
+async def upload_image(file: UploadFile = File(...)):
+    try:
+        # Read the file content
+        contents = await file.read()
+        
+        # Open image using PIL
+        image = Image.open(io.BytesIO(contents))
+        
+        # Convert to RGB if needed
+        if image.mode in ('RGBA', 'LA'):
+            image = image.convert('RGB')
+            
+        # Create a buffer to store the compressed image
+        buffer = io.BytesIO()
+        
+        # Save the image with compression
+        image.save(buffer, format='JPEG', quality=85, optimize=True)
+        buffer.seek(0)
+        
+        # Convert to base64
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        
+        return {"image": img_str}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Gallery Event Management Endpoints
+@app.get("/gallery-events")
+async def get_gallery_events():
+    try:
+        events = await events_collection.find({"type": "gallery"}).to_list(length=None)
+        # Convert ObjectId to string for each event
+        for event in events:
+            event["_id"] = str(event["_id"])
+        return events
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/gallery-events")
+async def create_gallery_event(event: GalleryEventCreate):
+    try:
+        event_dict = event.dict()
+        event_dict["type"] = "gallery"  # Add type field to distinguish gallery events
+        result = await events_collection.insert_one(event_dict)
+        if result.inserted_id:
+            created_event = await events_collection.find_one(
+                {"_id": result.inserted_id}
+            )
+            created_event["_id"] = str(created_event["_id"])
+            return created_event
+        raise HTTPException(status_code=500, detail="Failed to create event")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/gallery-events/{event_id}")
+async def update_gallery_event(event_id: str, event: GalleryEventUpdate):
+    try:
+        event_dict = event.dict()
+        event_dict["type"] = "gallery"  # Ensure type remains gallery
+        result = await events_collection.update_one(
+            {"_id": ObjectId(event_id), "type": "gallery"},
+            {"$set": event_dict}
+        )
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Gallery event not found")
+        updated_event = await events_collection.find_one(
+            {"_id": ObjectId(event_id)}
+        )
+        updated_event["_id"] = str(updated_event["_id"])
+        return updated_event
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid event ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/gallery-events/{event_id}")
+async def delete_gallery_event(event_id: str):
+    try:
+        result = await events_collection.delete_one(
+            {"_id": ObjectId(event_id), "type": "gallery"}
+        )
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Gallery event not found")
+        return {"message": "Gallery event deleted successfully"}
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid event ID")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

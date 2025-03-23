@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Edit2, Trash2, Image as ImageIcon, Calendar, MapPin, Users } from 'lucide-react';
+import { Plus, X, Edit2, Trash2, Upload } from 'lucide-react';
+import axios from 'axios';
 
 interface GalleryEvent {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   date: string;
@@ -13,38 +14,14 @@ interface GalleryEvent {
   thumbnail: string;
   images: string[];
   details: string;
-  highlights: string[];
+  type: string;
 }
 
 const GalleryManagement = () => {
-  const [events, setEvents] = useState<GalleryEvent[]>([
-    {
-      id: '1',
-      title: "Corporate Leadership Summit",
-      description: "Annual gathering of industry leaders",
-      date: "March 15, 2024",
-      location: "Grand Convention Center",
-      attendees: 500,
-      category: "Corporate",
-      thumbnail: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069",
-      images: [
-        "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069",
-        "https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=2070",
-        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070"
-      ],
-      details: "Our annual Corporate Leadership Summit brought together 500+ executives from Fortune 500 companies for a day of insightful discussions, networking, and strategic planning.",
-      highlights: [
-        "500+ attendees from Fortune 500 companies",
-        "20 keynote speakers",
-        "Interactive workshops",
-        "Networking sessions"
-      ]
-    }
-  ]);
-
+  const [events, setEvents] = useState<GalleryEvent[]>([]);
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState<GalleryEvent | null>(null);
-  const [newEvent, setNewEvent] = useState<Partial<GalleryEvent>>({
+  const [newEvent, setNewEvent] = useState<Omit<GalleryEvent, '_id'>>({
     title: '',
     description: '',
     date: '',
@@ -54,91 +31,121 @@ const GalleryManagement = () => {
     thumbnail: '',
     images: [],
     details: '',
-    highlights: ['']
+    type: 'gallery'
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingEvent) {
-      setEvents(events.map(event =>
-        event.id === editingEvent.id ? { ...event, ...newEvent } as GalleryEvent : event
-      ));
-      setEditingEvent(null);
-    } else {
-      setEvents([
-        ...events,
-        {
-          ...newEvent as GalleryEvent,
-          id: Date.now().toString(),
-        },
-      ]);
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/gallery-events');
+      setEvents(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setError('Failed to load events');
     }
-    setIsAddingEvent(false);
-    setNewEvent({
-      title: '',
-      description: '',
-      date: '',
-      location: '',
-      attendees: 0,
-      category: '',
-      thumbnail: '',
-      images: [],
-      details: '',
-      highlights: ['']
-    });
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const handleImageUpload = async (file: File, isThumb: boolean = false) => {
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post('http://127.0.0.1:8000/upload-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const imageData = `data:image/jpeg;base64,${response.data.image}`;
+
+      if (isThumb) {
+        setNewEvent(prev => ({ ...prev, thumbnail: imageData }));
+      } else {
+        setNewEvent(prev => ({
+          ...prev,
+          images: [...prev.images, imageData],
+        }));
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setError('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    try {
+      if (editingEvent) {
+        await axios.put(`http://127.0.0.1:8000/gallery-events/${editingEvent._id}`, newEvent);
+      } else {
+        await axios.post('http://127.0.0.1:8000/gallery-events', newEvent);
+      }
+      
+      await fetchEvents();
+      setIsAddingEvent(false);
+      setEditingEvent(null);
+      setNewEvent({
+        title: '',
+        description: '',
+        date: '',
+        location: '',
+        attendees: 0,
+        category: '',
+        thumbnail: '',
+        images: [],
+        details: '',
+        type: 'gallery'
+      });
+    } catch (error) {
+      console.error('Error saving event:', error);
+      setError('Failed to save event');
+    }
   };
 
   const handleEdit = (event: GalleryEvent) => {
     setEditingEvent(event);
-    setNewEvent(event);
+    setNewEvent({
+      title: event.title,
+      description: event.description,
+      date: event.date,
+      location: event.location,
+      attendees: event.attendees,
+      category: event.category,
+      thumbnail: event.thumbnail,
+      images: event.images,
+      details: event.details,
+      type: 'gallery'
+    });
     setIsAddingEvent(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this event?')) {
-      setEvents(events.filter(event => event.id !== id));
+      try {
+        await axios.delete(`http://127.0.0.1:8000/gallery-events/${id}`);
+        await fetchEvents();
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        setError('Failed to delete event');
+      }
     }
-  };
-
-  const addHighlight = () => {
-    setNewEvent(prev => ({
-      ...prev,
-      highlights: [...(prev.highlights || []), '']
-    }));
-  };
-
-  const updateHighlight = (index: number, value: string) => {
-    setNewEvent(prev => ({
-      ...prev,
-      highlights: prev.highlights?.map((highlight, i) => i === index ? value : highlight) || []
-    }));
-  };
-
-  const removeHighlight = (index: number) => {
-    setNewEvent(prev => ({
-      ...prev,
-      highlights: prev.highlights?.filter((_, i) => i !== index) || []
-    }));
-  };
-
-  const addImage = () => {
-    setNewEvent(prev => ({
-      ...prev,
-      images: [...(prev.images || []), '']
-    }));
-  };
-
-  const updateImage = (index: number, value: string) => {
-    setNewEvent(prev => ({
-      ...prev,
-      images: prev.images?.map((image, i) => i === index ? value : image) || []
-    }));
   };
 
   const removeImage = (index: number) => {
     setNewEvent(prev => ({
       ...prev,
-      images: prev.images?.filter((_, i) => i !== index) || []
+      images: prev.images.filter((_, i) => i !== index),
     }));
   };
 
@@ -168,45 +175,41 @@ const GalleryManagement = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => (
             <motion.div
-              key={event.id}
+              key={event._id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="group relative bg-neutral-900 rounded-xl overflow-hidden"
+              className="group relative"
             >
-              <div className="aspect-w-16 aspect-h-9">
+              <div className="relative h-48 sm:h-64 md:h-96 w-full">
                 <img
                   src={event.thumbnail}
                   alt={event.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-xl"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
                   <div className="absolute bottom-4 left-4 right-4">
                     <h4 className="text-lg font-medium text-white truncate">{event.title}</h4>
                     <p className="text-sm text-neutral-300">{event.category}</p>
-                    <div className="flex items-center gap-2 mt-2 text-sm text-neutral-400">
-                      <Calendar className="w-4 h-4" />
-                      <span>{event.date}</span>
-                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleEdit(event)}
-                  className="p-2 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500/20 transition-colors"
-                >
-                  <Edit2 className="w-5 h-5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleDelete(event.id)}
-                  className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </motion.button>
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleEdit(event)}
+                    className="p-2 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500/20 transition-colors"
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleDelete(event._id)}
+                    className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -346,86 +349,71 @@ const GalleryManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-neutral-300 mb-2">
-                      Thumbnail URL
+                      Thumbnail Image
                     </label>
-                    <input
-                      type="url"
-                      value={newEvent.thumbnail}
-                      onChange={(e) => setNewEvent({ ...newEvent, thumbnail: e.target.value })}
-                      className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                      required
-                    />
+                    <div className="flex items-center gap-4">
+                      <label className="flex-1 cursor-pointer">
+                        <div className="relative w-full h-40 bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden">
+                          {newEvent.thumbnail ? (
+                            <img
+                              src={newEvent.thumbnail}
+                              alt="Thumbnail"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Upload className="w-8 h-8 text-neutral-500" />
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, true);
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-neutral-300">
-                        Additional Images
-                      </label>
-                      <button
-                        type="button"
-                        onClick={addImage}
-                        className="text-blue-500 hover:text-blue-400 text-sm flex items-center gap-1"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Image
-                      </button>
-                    </div>
-                    <div className="space-y-2">
+                    <label className="block text-sm font-medium text-neutral-300 mb-2">
+                      Additional Images
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {newEvent.images?.map((image, index) => (
-                        <div key={index} className="flex gap-2">
-                          <input
-                            type="url"
-                            value={image}
-                            onChange={(e) => updateImage(index, e.target.value)}
-                            className="flex-1 px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                            placeholder="Image URL"
+                        <div key={index} className="relative h-40">
+                          <img
+                            src={image}
+                            alt={`Additional ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
                           />
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
-                            className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                            className="absolute top-2 right-2 p-1 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20"
                           >
-                            <X className="h-5 w-5" />
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-neutral-300">
-                        Event Highlights
+                      <label className="cursor-pointer">
+                        <div className="relative w-full h-40 bg-neutral-800 rounded-lg border border-neutral-700 flex items-center justify-center">
+                          <Upload className="w-8 h-8 text-neutral-500" />
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file);
+                          }}
+                        />
                       </label>
-                      <button
-                        type="button"
-                        onClick={addHighlight}
-                        className="text-blue-500 hover:text-blue-400 text-sm flex items-center gap-1"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Highlight
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {newEvent.highlights?.map((highlight, index) => (
-                        <div key={index} className="flex gap-2">
-                          <input
-                            type="text"
-                            value={highlight}
-                            onChange={(e) => updateHighlight(index, e.target.value)}
-                            className="flex-1 px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                            placeholder="Event highlight"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeHighlight(index)}
-                            className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                          >
-                            <X className="h-5 w-5" />
-                          </button>
-                        </div>
-                      ))}
                     </div>
                   </div>
 
@@ -444,9 +432,10 @@ const GalleryManagement = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+                      disabled={uploadingImage}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
-                      {editingEvent ? 'Update Event' : 'Create Event'}
+                      {uploadingImage ? 'Uploading...' : editingEvent ? 'Update Event' : 'Create Event'}
                     </motion.button>
                   </div>
                 </form>
