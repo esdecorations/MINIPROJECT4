@@ -8,7 +8,7 @@ import {
   Clock
 } from 'lucide-react';
 
-const AdminDashboard = () => {
+const AdminHistory = () => {
   const stats = [
     {
       title: "Total Events",
@@ -167,4 +167,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default AdminHistory;

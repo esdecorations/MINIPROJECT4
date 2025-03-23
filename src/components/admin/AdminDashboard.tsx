@@ -5,7 +5,6 @@ import {
   Settings,
   Users,
   Mail,
-  Calendar,
   Image,
   LogOut,
   Briefcase,
@@ -17,11 +16,10 @@ import {
 import AdminSettings from "./sections/AdminSettings";
 import JobManagement from "./sections/JobManagement";
 import UserInquiries from "./sections/UserInquiries";
-import EventManagement from "./sections/EventManagement";
 import GalleryManagement from "./sections/GalleryManagement";
 import LatestWorksManagement from "./sections/LatestWorksManagement";
 import FAQManagement from "./sections/FAQManagement";
-import AdminDashboard from "./sections/AdminDashboard";
+import AdminHistory from "./sections/AdminHistory";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -48,11 +46,6 @@ const AdminLayout = () => {
       icon: <Mail className="h-5 w-5 flex-shrink-0" />, 
       label: "User Inquiries", 
       href: "inquiries" 
-    },
-    { 
-      icon: <Calendar className="h-5 w-5 flex-shrink-0" />, 
-      label: "Event Management", 
-      href: "events" 
     },
     { 
       icon: <Image className="h-5 w-5 flex-shrink-0" />, 
@@ -206,15 +199,14 @@ const AdminLayout = () => {
             <h1 className="text-3xl font-bold">{getCurrentPageTitle()}</h1>
           </div>
           <Routes>
-            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminHistory />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="jobs" element={<JobManagement />} />
             <Route path="inquiries" element={<UserInquiries />} />
-            <Route path="events" element={<EventManagement />} />
             <Route path="gallery" element={<GalleryManagement />} />
             <Route path="latest-works" element={<LatestWorksManagement />} />
             <Route path="faq" element={<FAQManagement />} />
-            <Route path="*" element={<AdminDashboard />} />
+            <Route path="*" element={<AdminHistory />} />
           </Routes>
         </div>
       </div>
