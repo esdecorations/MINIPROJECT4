@@ -14,6 +14,7 @@ dist-ssr
 
 # Python cache files
 backend/__pycache__/
+venv/
 **/__pycache__/
 
 # Editor directories and files
