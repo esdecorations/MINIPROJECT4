@@ -25,7 +25,12 @@ const LatestSection = () => {
     const fetchWorks = async () => {
       try {
         const response = await axios.get('http://127.0.0.1:8000/latest-works');
-        setWorks(response.data);
+        // Transform the works data to include the base64 image data
+        const transformedWorks = response.data.map((work: LatestWork) => ({
+          ...work,
+          thumbnail: `data:image/jpeg;base64,${work.thumbnail}`
+        }));
+        setWorks(transformedWorks);
       } catch (error) {
         console.error('Error fetching works:', error);
       }

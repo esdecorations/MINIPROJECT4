@@ -109,6 +109,11 @@ class GalleryEventUpdate(GalleryEventBase):
 class GalleryEventInDB(GalleryEventBase):
     id: str
 
+class LatestWork(BaseModel):
+    title: str
+    thumbnail: str  # Will store base64 image data
+    category: str
+
 # Event Management Endpoints
 @app.get("/events")
 async def get_events():
@@ -236,11 +241,7 @@ class FAQ(BaseModel):
     answer: str
     category: str
 
-class LatestWork(BaseModel):
-    title: str
-    link: str
-    thumbnail: str
-    category: str
+
 
 # Job Listing Model
 class JobListing(BaseModel):
@@ -663,57 +664,6 @@ async def delete_faq(faq_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Latest Works Endpoints
-@app.get("/latest-works")
-async def get_latest_works():
-    try:
-        works = await latest_works_collection.find().to_list(length=None)
-        # Convert ObjectId to string for each work
-        for work in works:
-            work["_id"] = str(work["_id"])
-        return works
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/latest-works")
-async def create_latest_work(work: LatestWork):
-    try:
-        result = await latest_works_collection.insert_one(work.dict())
-        if result.inserted_id:
-            created_work = await latest_works_collection.find_one({"_id": result.inserted_id})
-            created_work["_id"] = str(created_work["_id"])
-            return created_work
-        raise HTTPException(status_code=500, detail="Failed to create work")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.put("/latest-works/{work_id}")
-async def update_latest_work(work_id: str, work: LatestWork):
-    try:
-        result = await latest_works_collection.update_one(
-            {"_id": ObjectId(work_id)},
-            {"$set": work.dict()}
-        )
-        if result.modified_count == 0:
-            raise HTTPException(status_code=404, detail="Work not found")
-        updated_work = await latest_works_collection.find_one({"_id": ObjectId(work_id)})
-        updated_work["_id"] = str(updated_work["_id"])
-        return updated_work
-    except errors.InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid work ID")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/latest-works/{work_id}")
-async def delete_latest_work(work_id: str):
-    try:
-        result = await latest_works_collection.delete_one({"_id": ObjectId(work_id)})
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Work not found")
-        return {"message": "Work deleted successfully"}
-    except errors.InvalidId:
-        raise HTTPException(status_code=400, detail="Invalid work ID")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 # New image upload endpoint
 @app.post("/upload-image")
@@ -803,5 +753,88 @@ async def delete_gallery_event(event_id: str):
         return {"message": "Gallery event deleted successfully"}
     except errors.InvalidId:
         raise HTTPException(status_code=400, detail="Invalid event ID")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/latest-works")
+async def get_latest_works():
+    try:
+        works = await latest_works_collection.find().to_list(length=None)
+        # Convert ObjectId to string for each work
+        for work in works:
+            work["_id"] = str(work["_id"])
+        return works
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/latest-works")
+async def create_latest_work(work: dict):
+    try:
+        # Validate required fields
+        if not all(key in work for key in ["title", "thumbnail", "category"]):
+            raise HTTPException(status_code=422, detail="Missing required fields")
+
+        # Insert the work into MongoDB
+        result = await latest_works_collection.insert_one(work)
+        
+        if result.inserted_id:
+            created_work = await latest_works_collection.find_one({"_id": result.inserted_id})
+            created_work["_id"] = str(created_work["_id"])
+            return created_work
+            
+        raise HTTPException(status_code=500, detail="Failed to create work")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/latest-works/{work_id}")
+async def update_latest_work(work_id: str, work: dict):
+    try:
+        # Validate work_id
+        if not ObjectId.is_valid(work_id):
+            raise HTTPException(status_code=400, detail="Invalid work ID format")
+
+        # Validate required fields
+        if not all(key in work for key in ["title", "thumbnail", "category"]):
+            raise HTTPException(status_code=422, detail="Missing required fields")
+
+        result = await latest_works_collection.update_one(
+            {"_id": ObjectId(work_id)},
+            {"$set": work}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Work not found")
+            
+        if result.modified_count == 0:
+            raise HTTPException(status_code=304, detail="No changes made")
+            
+        updated_work = await latest_works_collection.find_one({"_id": ObjectId(work_id)})
+        updated_work["_id"] = str(updated_work["_id"])
+        return updated_work
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid work ID format")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/latest-works/{work_id}")
+async def delete_latest_work(work_id: str):
+    try:
+        # Validate work_id
+        if not ObjectId.is_valid(work_id):
+            raise HTTPException(status_code=400, detail="Invalid work ID format")
+
+        # Check if work exists before deleting
+        work = await latest_works_collection.find_one({"_id": ObjectId(work_id)})
+        if not work:
+            raise HTTPException(status_code=404, detail="Work not found")
+
+        result = await latest_works_collection.delete_one({"_id": ObjectId(work_id)})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to delete work")
+            
+        return {"message": "Work deleted successfully"}
+    except errors.InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid work ID format")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
