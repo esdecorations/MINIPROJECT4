@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link as ScrollLink } from 'react-scroll';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import logo from '../images/logo.png';
 
 const Navbar = () => {
   const location = useLocation();
@@ -84,8 +85,8 @@ const Navbar = () => {
               whileHover={{ scale: 1.05 }}
               className="text-white text-2xl font-bold flex items-center gap-2"
             >
-              <Briefcase className="w-8 h-8" />
-              E&S
+              <img src={logo} alt="E&S Logo" className="w-12 h-12 object-contain" />
+              <span>E&S</span>
             </motion.div>
           </RouterLink>
 

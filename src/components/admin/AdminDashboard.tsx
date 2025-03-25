@@ -7,7 +7,6 @@ import {
   Mail,
   Image,
   LogOut,
-  Briefcase,
   Home,
   MessageSquare,
   Menu,
@@ -20,6 +19,7 @@ import GalleryManagement from "./sections/GalleryManagement";
 import LatestWorksManagement from "./sections/LatestWorksManagement";
 import FAQManagement from "./sections/FAQManagement";
 import AdminHistory from "./sections/AdminHistory";
+import logo from '../../images/logo.png';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -80,7 +80,7 @@ const AdminLayout = () => {
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-col w-64 bg-neutral-900 border-r border-neutral-800 min-h-screen">
         <div className="flex items-center gap-3 px-6 py-6 border-b border-neutral-800">
-          <Briefcase className="h-8 w-8 text-blue-500 flex-shrink-0" />
+          <img src={logo} alt="E&S Logo" className="h-8 w-8 object-contain" />
           <span className="text-xl font-bold">Admin Panel</span>
         </div>
         
@@ -143,7 +143,7 @@ const AdminLayout = () => {
           <div className="fixed inset-y-0 left-0 w-64 bg-neutral-900 z-50 lg:hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
               <div className="flex items-center gap-3">
-                <Briefcase className="h-6 w-6 text-blue-500" />
+                <img src={logo} alt="E&S Logo" className="h-6 w-6 object-contain" />
                 <span className="text-lg font-bold">Admin Panel</span>
               </div>
               <button onClick={() => setSidebarOpen(false)}>

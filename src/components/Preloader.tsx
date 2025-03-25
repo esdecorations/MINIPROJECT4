@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Briefcase } from 'lucide-react';
+import logo from '../images/logo.png';
 
 const Preloader = () => {
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ const Preloader = () => {
           }}
           className="flex items-center gap-4"
         >
-          <Briefcase className="w-16 h-16 text-white" />
+          <img src={logo} alt="E&S Logo" className="w-16 h-16 object-contain" />
           <span className="text-4xl font-bold text-white">E&S</span>
         </motion.div>
         <motion.div
