@@ -79,9 +79,8 @@ const AdminLayout = () => {
     <div className="min-h-screen bg-black text-white flex flex-col lg:flex-row">
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-col w-64 bg-neutral-900 border-r border-neutral-800 min-h-screen">
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-neutral-800">
-          <img src={logo} alt="E&S Logo" className="h-8 w-8 object-contain" />
-          <span className="text-xl font-bold">Admin Panel</span>
+        <div className="flex items-center justify-center px-6 py-6 border-b border-neutral-800">
+          <img src={logo} alt="E&S Logo" className="h-12 w-12 object-contain" />
         </div>
         
         <div className="flex flex-col flex-1 p-4 space-y-2">
@@ -129,7 +128,7 @@ const AdminLayout = () => {
           >
             <Menu className="h-6 w-6" />
           </button>
-          <span className="text-xl font-bold">Admin Panel</span>
+          <img src={logo} alt="E&S Logo" className="h-8 w-8 object-contain" />
         </div>
       </div>
 
@@ -142,10 +141,7 @@ const AdminLayout = () => {
           />
           <div className="fixed inset-y-0 left-0 w-64 bg-neutral-900 z-50 lg:hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
-              <div className="flex items-center gap-3">
-                <img src={logo} alt="E&S Logo" className="h-6 w-6 object-contain" />
-                <span className="text-lg font-bold">Admin Panel</span>
-              </div>
+              <img src={logo} alt="E&S Logo" className="h-8 w-8 object-contain" />
               <button onClick={() => setSidebarOpen(false)}>
                 <X className="h-6 w-6 text-white" />
               </button>

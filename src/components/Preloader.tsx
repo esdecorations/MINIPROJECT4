@@ -39,10 +39,9 @@ const Preloader = () => {
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="flex items-center gap-4"
+          className="flex items-center justify-center"
         >
           <img src={logo} alt="E&S Logo" className="w-16 h-16 object-contain" />
-          <span className="text-4xl font-bold text-white">E&S</span>
         </motion.div>
         <motion.div
           className="absolute inset-0"

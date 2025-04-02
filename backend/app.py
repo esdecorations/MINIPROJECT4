@@ -65,7 +65,7 @@ faqs_collection = db["faqs"]
 latest_works_collection = db["latest_works"]
 job_applications_collection = db["job_applications"]
 job_listings_collection = db["job_listings"]
-events_collection = db["events"]  # New collection for events
+events_collection = db["events"]  
 
 # Initialize FastMail
 fm = FastMail(email_conf)
