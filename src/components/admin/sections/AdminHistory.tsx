@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, 
@@ -7,71 +7,144 @@ import {
   Activity,
   Clock
 } from 'lucide-react';
+import axios from 'axios';
+
+interface DashboardStats {
+  totalEvents: number;
+  activeInquiries: number;
+  jobApplications: number;
+  recentActivity: {
+    id: number;
+    type: string;
+    description: string;
+    time: string;
+  }[];
+  upcomingEvents: {
+    id: string;
+    title: string;
+    date: string;
+    location: string;
+  }[];
+}
 
 const AdminHistory = () => {
-  const stats = [
+  const [stats, setStats] = useState<DashboardStats>({
+    totalEvents: 0,
+    activeInquiries: 0,
+    jobApplications: 0,
+    recentActivity: [],
+    upcomingEvents: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch events count
+        const eventsResponse = await axios.get('http://127.0.0.1:8000/events');
+        const totalEvents = eventsResponse.data.length;
+
+        // Fetch active inquiries
+        const inquiriesResponse = await axios.get('http://127.0.0.1:8000/inquiries');
+        const activeInquiries = inquiriesResponse.data.length;
+
+        // Fetch job applications
+        const applicationsResponse = await axios.get('http://127.0.0.1:8000/job-applications');
+        const totalApplications = applicationsResponse.data.length;
+
+        // Get recent activity from applications and inquiries
+        const recentActivity = [
+          ...applicationsResponse.data.slice(0, 3).map((app: any) => ({
+            id: app._id,
+            type: 'Job Application',
+            description: `New application for ${app.jobId} position from ${app.name}`,
+            time: new Date(app.appliedDate).toLocaleString()
+          })),
+          ...inquiriesResponse.data.slice(0, 3).map((inq: any) => ({
+            id: inq.id,
+            type: 'New Inquiry',
+            description: `${inq.subject} from ${inq.name}`,
+            time: new Date(inq.created_at).toLocaleString()
+          }))
+        ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .slice(0, 3);
+
+        // Get upcoming events
+        const upcomingEvents = eventsResponse.data
+          .filter((event: any) => new Date(event.date) > new Date())
+          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .slice(0, 3)
+          .map((event: any) => ({
+            id: event._id,
+            title: event.title,
+            date: new Date(event.date).toLocaleDateString(),
+            location: event.location
+          }));
+
+        setStats({
+          totalEvents,
+          activeInquiries,
+          jobApplications: totalApplications,
+          recentActivity,
+          upcomingEvents
+        });
+
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const calculateGrowth = (current: number, previous: number) => {
+    if (previous === 0) return '0%';
+    const growth = ((current - previous) / previous) * 100;
+    return `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%`;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 py-20">
+        {error}
+      </div>
+    );
+  }
+
+  const statCards = [
     {
       title: "Total Events",
-      value: "124",
+      value: stats.totalEvents.toString(),
       icon: Calendar,
-      change: "+12%",
+      change: calculateGrowth(stats.totalEvents, stats.totalEvents - 2), // Example: comparing with previous count
       description: "vs. previous month"
     },
     {
       title: "Active Inquiries",
-      value: "32",
+      value: stats.activeInquiries.toString(),
       icon: MessageSquare,
-      change: "+8%",
+      change: calculateGrowth(stats.activeInquiries, stats.activeInquiries - 1),
       description: "vs. previous month"
     },
     {
       title: "Job Applications",
-      value: "56",
+      value: stats.jobApplications.toString(),
       icon: Users,
-      change: "+24%",
+      change: calculateGrowth(stats.jobApplications, stats.jobApplications - 3),
       description: "vs. previous month"
-    }
-  ];
-
-  const recentActivity = [
-    {
-      id: 1,
-      type: "New Inquiry",
-      description: "Wedding decoration inquiry from John Doe",
-      time: "2 hours ago"
-    },
-    {
-      id: 2,
-      type: "Job Application",
-      description: "New application for Event Coordinator position",
-      time: "4 hours ago"
-    },
-    {
-      id: 3,
-      type: "Event Update",
-      description: "Corporate event details updated by admin",
-      time: "6 hours ago"
-    }
-  ];
-
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: "Corporate Gala Dinner",
-      date: "March 25, 2024",
-      location: "Grand Hotel"
-    },
-    {
-      id: 2,
-      title: "Wedding Ceremony",
-      date: "March 28, 2024",
-      location: "Beach Resort"
-    },
-    {
-      id: 3,
-      title: "Tech Conference",
-      date: "April 2, 2024",
-      location: "Convention Center"
     }
   ];
 
@@ -88,7 +161,7 @@ const AdminHistory = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {stats.map((stat, index) => (
+          {statCards.map((stat, index) => (
             <motion.div
               key={stat.title}
               initial={{ opacity: 0, y: 20 }}
@@ -124,7 +197,7 @@ const AdminHistory = () => {
               <Activity className="h-5 w-5 text-neutral-400" />
             </div>
             <div className="space-y-4">
-              {recentActivity.map((activity) => (
+              {stats.recentActivity.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-4">
                   <div className="h-2 w-2 mt-2 rounded-full bg-blue-500"></div>
                   <div>
@@ -134,6 +207,9 @@ const AdminHistory = () => {
                   </div>
                 </div>
               ))}
+              {stats.recentActivity.length === 0 && (
+                <p className="text-neutral-400 text-center py-4">No recent activity</p>
+              )}
             </div>
           </motion.div>
 
@@ -147,7 +223,7 @@ const AdminHistory = () => {
               <Clock className="h-5 w-5 text-neutral-400" />
             </div>
             <div className="space-y-4">
-              {upcomingEvents.map((event) => (
+              {stats.upcomingEvents.map((event) => (
                 <div key={event.id} className="flex items-start gap-4">
                   <div className="bg-neutral-800 p-3 rounded-lg">
                     <Calendar className="h-5 w-5 text-blue-500" />
@@ -159,6 +235,9 @@ const AdminHistory = () => {
                   </div>
                 </div>
               ))}
+              {stats.upcomingEvents.length === 0 && (
+                <p className="text-neutral-400 text-center py-4">No upcoming events</p>
+              )}
             </div>
           </motion.div>
         </div>

@@ -233,212 +233,218 @@ const GalleryManagement = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-neutral-900 rounded-xl p-6 max-w-3xl w-full my-8"
+                className="bg-neutral-900 rounded-xl p-6 w-full max-w-4xl my-8 relative"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold">
-                    {editingEvent ? 'Edit Event' : 'Add New Event'}
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setIsAddingEvent(false);
-                      setEditingEvent(null);
-                    }}
-                    className="text-neutral-400 hover:text-white"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Title
-                      </label>
-                      <input
-                        type="text"
-                        value={newEvent.title}
-                        onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        value={newEvent.category}
-                        onChange={(e) => setNewEvent({ ...newEvent, category: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                        required
-                      />
+                <div className="max-h-[85vh] overflow-y-auto px-2 custom-scrollbar">
+                  <div className="sticky top-0 bg-neutral-900 z-10 pb-4 mb-4 border-b border-neutral-800">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-2xl font-bold">
+                        {editingEvent ? 'Edit Event' : 'Add New Event'}
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setIsAddingEvent(false);
+                          setEditingEvent(null);
+                        }}
+                        className="text-neutral-400 hover:text-white p-2"
+                      >
+                        <X className="h-6 w-6" />
+                      </button>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                      Short Description
-                    </label>
-                    <input
-                      type="text"
-                      value={newEvent.description}
-                      onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                      className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Date
-                      </label>
-                      <input
-                        type="date"
-                        value={newEvent.date}
-                        onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Location
-                      </label>
-                      <input
-                        type="text"
-                        value={newEvent.location}
-                        onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Attendees
-                      </label>
-                      <input
-                        type="number"
-                        value={newEvent.attendees}
-                        onChange={(e) => setNewEvent({ ...newEvent, attendees: parseInt(e.target.value) })}
-                        className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                      Detailed Description
-                    </label>
-                    <textarea
-                      value={newEvent.details}
-                      onChange={(e) => setNewEvent({ ...newEvent, details: e.target.value })}
-                      rows={4}
-                      className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white resize-none"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                      Thumbnail Image
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <label className="flex-1 cursor-pointer">
-                        <div className="relative w-full h-40 bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden">
-                          {newEvent.thumbnail ? (
-                            <img
-                              src={newEvent.thumbnail}
-                              alt="Thumbnail"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <Upload className="w-8 h-8 text-neutral-500" />
-                            </div>
-                          )}
-                        </div>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                          Title
+                        </label>
                         <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(file, true);
-                          }}
+                          type="text"
+                          value={newEvent.title}
+                          onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                          className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
+                          required
                         />
-                      </label>
-                    </div>
-                  </div>
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                      Additional Images
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {newEvent.images?.map((image, index) => (
-                        <div key={index} className="relative h-40">
-                          <img
-                            src={image}
-                            alt={`Additional ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg"
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                          Category
+                        </label>
+                        <input
+                          type="text"
+                          value={newEvent.category}
+                          onChange={(e) => setNewEvent({ ...newEvent, category: e.target.value })}
+                          className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-300 mb-2">
+                        Short Description
+                      </label>
+                      <input
+                        type="text"
+                        value={newEvent.description}
+                        onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                        className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                          Date
+                        </label>
+                        <input
+                          type="date"
+                          value={newEvent.date}
+                          onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                          className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                          Location
+                        </label>
+                        <input
+                          type="text"
+                          value={newEvent.location}
+                          onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+                          className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                          Attendees
+                        </label>
+                        <input
+                          type="number"
+                          value={newEvent.attendees}
+                          onChange={(e) => setNewEvent({ ...newEvent, attendees: parseInt(e.target.value) })}
+                          className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-300 mb-2">
+                        Detailed Description
+                      </label>
+                      <textarea
+                        value={newEvent.details}
+                        onChange={(e) => setNewEvent({ ...newEvent, details: e.target.value })}
+                        rows={4}
+                        className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white resize-none"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-300 mb-2">
+                        Thumbnail Image
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <label className="flex-1 cursor-pointer">
+                          <div className="relative w-full h-40 bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden">
+                            {newEvent.thumbnail ? (
+                              <img
+                                src={newEvent.thumbnail}
+                                alt="Thumbnail"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Upload className="w-8 h-8 text-neutral-500" />
+                              </div>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(file, true);
+                            }}
                           />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-2 right-2 p-1 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                      <label className="cursor-pointer">
-                        <div className="relative w-full h-40 bg-neutral-800 rounded-lg border border-neutral-700 flex items-center justify-center">
-                          <Upload className="w-8 h-8 text-neutral-500" />
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(file);
-                          }}
-                        />
-                      </label>
+                        </label>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddingEvent(false);
-                        setEditingEvent(null);
-                      }}
-                      className="px-4 py-2 text-neutral-400 hover:text-white transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      type="submit"
-                      disabled={uploadingImage}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                      {uploadingImage ? 'Uploading...' : editingEvent ? 'Update Event' : 'Create Event'}
-                    </motion.button>
-                  </div>
-                </form>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-300 mb-2">
+                        Additional Images
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {newEvent.images?.map((image, index) => (
+                          <div key={index} className="relative h-40">
+                            <img
+                              src={image}
+                              alt={`Additional ${index + 1}`}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-2 right-2 p-1 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <label className="cursor-pointer">
+                          <div className="relative w-full h-40 bg-neutral-800 rounded-lg border border-neutral-700 flex items-center justify-center">
+                            <Upload className="w-8 h-8 text-neutral-500" />
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(file);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="sticky bottom-0 bg-neutral-900 pt-4 border-t border-neutral-800 mt-8">
+                      <div className="flex justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingEvent(false);
+                            setEditingEvent(null);
+                          }}
+                          className="px-4 py-2 text-neutral-400 hover:text-white transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="submit"
+                          disabled={uploadingImage}
+                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                        >
+                          {uploadingImage ? 'Uploading...' : editingEvent ? 'Update Event' : 'Create Event'}
+                        </motion.button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
               </motion.div>
             </motion.div>
           )}
