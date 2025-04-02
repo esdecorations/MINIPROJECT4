@@ -26,6 +26,15 @@ interface JobApplication {
   address?: string;
 }
 
+interface FormErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  experience?: string;
+  address?: string;
+  resume?: string;
+}
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
@@ -41,6 +50,7 @@ const CareersPage = () => {
     phone: '',
     experience: '',
   });
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{
     type: 'success' | 'error' | null;
@@ -67,6 +77,68 @@ const CareersPage = () => {
     fetchJobs();
   }, []);
 
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
+    let isValid = true;
+
+    // Name validation
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+      isValid = false;
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters long';
+      isValid = false;
+    } else if (!/^[a-zA-Z\s]+$/.test(formData.name.trim())) {
+      errors.name = 'Name should only contain letters and spaces';
+      isValid = false;
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      errors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    // Phone validation
+    if (!formData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+      isValid = false;
+    } else if (!/^[1-9][0-9]{9}$/.test(formData.phone.trim())) {
+      errors.phone = 'Please enter a valid 10-digit phone number (should not start with 0)';
+      isValid = false;
+    }
+
+    // Experience (Age) validation
+    if (!formData.experience.trim()) {
+      errors.experience = 'Age is required';
+      isValid = false;
+    } else {
+      const age = parseInt(formData.experience);
+      if (isNaN(age) || age < 18 || age > 60) {
+        errors.experience = 'Age must be between 18 and 60';
+        isValid = false;
+      }
+    }
+
+    // Address validation for catering position
+    if (formData.jobId === 'catering' && (!formData.address || !formData.address.trim())) {
+      errors.address = 'Address is required for catering positions';
+      isValid = false;
+    }
+
+    // Resume validation for non-catering positions
+    if (formData.jobId !== 'catering' && !formData.resume) {
+      errors.resume = 'Resume is required for this position';
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
       case 'ChefHat':
@@ -84,6 +156,11 @@ const CareersPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus({ type: null, message: '' });
+
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const applicationData = {
@@ -107,6 +184,7 @@ const CareersPage = () => {
           phone: '',
           experience: '',
         });
+        setFormErrors({});
       }
     } catch (error) {
       setSubmitStatus({
@@ -121,6 +199,7 @@ const CareersPage = () => {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setFileError('');
+    setFormErrors(prev => ({ ...prev, resume: undefined }));
     const file = e.target.files?.[0];
     
     if (file) {
@@ -219,6 +298,8 @@ const CareersPage = () => {
                     onClick={() => {
                       setSelectedJob(job._id);
                       setFormData({ ...formData, jobId: job.id });
+                      setFormErrors({});
+                      setFileError('');
                     }}
                   >
                     <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl overflow-hidden hover:border-neutral-700 transition-colors">
@@ -259,7 +340,11 @@ const CareersPage = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={(e) => {
-              if (e.target === e.currentTarget) setSelectedJob(null);
+              if (e.target === e.currentTarget) {
+                setSelectedJob(null);
+                setFormErrors({});
+                setFileError('');
+              }
             }}
           >
             <motion.div
@@ -269,7 +354,11 @@ const CareersPage = () => {
               className="bg-neutral-900 rounded-xl p-6 max-w-md w-full relative"
             >
               <button
-                onClick={() => setSelectedJob(null)}
+                onClick={() => {
+                  setSelectedJob(null);
+                  setFormErrors({});
+                  setFileError('');
+                }}
                 className="absolute right-4 top-4 text-neutral-400 hover:text-white"
               >
                 <X className="w-6 h-6" />
@@ -294,11 +383,20 @@ const CareersPage = () => {
                   </label>
                   <input
                     type="text"
-                    required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (formErrors.name) {
+                        setFormErrors(prev => ({ ...prev, name: undefined }));
+                      }
+                    }}
+                    className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                      formErrors.name ? 'border-red-500' : 'border-neutral-700'
+                    }`}
                   />
+                  {formErrors.name && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+                  )}
                 </div>
                 
                 <div>
@@ -307,11 +405,20 @@ const CareersPage = () => {
                   </label>
                   <input
                     type="email"
-                    required
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      if (formErrors.email) {
+                        setFormErrors(prev => ({ ...prev, email: undefined }));
+                      }
+                    }}
+                    className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                      formErrors.email ? 'border-red-500' : 'border-neutral-700'
+                    }`}
                   />
+                  {formErrors.email && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.email}</p>
+                  )}
                 </div>
                 
                 <div>
@@ -320,24 +427,45 @@ const CareersPage = () => {
                   </label>
                   <input
                     type="tel"
-                    required
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setFormData({ ...formData, phone: value });
+                      if (formErrors.phone) {
+                        setFormErrors(prev => ({ ...prev, phone: undefined }));
+                      }
+                    }}
+                    className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                      formErrors.phone ? 'border-red-500' : 'border-neutral-700'
+                    }`}
                   />
+                  {formErrors.phone && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.phone}</p>
+                  )}
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-neutral-300 mb-1">
-                    AGE
+                    Age
                   </label>
                   <input
-                    type="text"
-                    required
+                    type="number"
+                    min="18"
+                    max="60"
                     value={formData.experience}
-                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                    className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    onChange={(e) => {
+                      setFormData({ ...formData, experience: e.target.value });
+                      if (formErrors.experience) {
+                        setFormErrors(prev => ({ ...prev, experience: undefined }));
+                      }
+                    }}
+                    className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                      formErrors.experience ? 'border-red-500' : 'border-neutral-700'
+                    }`}
                   />
+                  {formErrors.experience && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.experience}</p>
+                  )}
                 </div>
 
                 {formData.jobId === 'catering' ? (
@@ -346,11 +474,20 @@ const CareersPage = () => {
                       Address
                     </label>
                     <textarea
-                      required
                       value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-24"
+                      onChange={(e) => {
+                        setFormData({ ...formData, address: e.target.value });
+                        if (formErrors.address) {
+                          setFormErrors(prev => ({ ...prev, address: undefined }));
+                        }
+                      }}
+                      className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-24 ${
+                        formErrors.address ? 'border-red-500' : 'border-neutral-700'
+                      }`}
                     />
+                    {formErrors.address && (
+                      <p className="mt-1 text-sm text-red-500">{formErrors.address}</p>
+                    )}
                   </div>
                 ) : (
                   <div>
@@ -359,13 +496,14 @@ const CareersPage = () => {
                     </label>
                     <input
                       type="file"
-                      required
                       accept=".pdf,.doc,.docx"
                       onChange={handleFileChange}
-                      className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                      className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 ${
+                        formErrors.resume || fileError ? 'border-red-500' : 'border-neutral-700'
+                      }`}
                     />
-                    {fileError && (
-                      <p className="mt-1 text-sm text-red-500">{fileError}</p>
+                    {(fileError || formErrors.resume) && (
+                      <p className="mt-1 text-sm text-red-500">{fileError || formErrors.resume}</p>
                     )}
                   </div>
                 )}

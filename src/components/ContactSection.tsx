@@ -53,7 +53,7 @@ const ContactSection = () => {
           <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-b from-neutral-200 to-neutral-600">
             Get in Touch
           </h2>
-          <p className="text-xl text-neutral-400 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Let's create something extraordinary together
           </p>
         </motion.div>
@@ -72,7 +72,7 @@ const ContactSection = () => {
                   Location
                 </h3>
                 <p className="text-neutral-400">
-                  123 Event Street, Creative City, ST 12345
+                  Nadelpeedika Junction, Pampady, Kottayam
                 </p>
               </div>
             </div>
@@ -82,7 +82,7 @@ const ContactSection = () => {
                 <h3 className="text-xl font-semibold mb-2 text-neutral-200">
                   Phone
                 </h3>
-                <p className="text-neutral-400">+1 (555) 123-4567</p>
+                <p className="text-neutral-400">+91 9562039676</p>
               </div>
             </div>
             <div className="flex items-start space-x-4">
