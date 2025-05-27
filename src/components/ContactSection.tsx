@@ -82,7 +82,7 @@ const ContactSection = () => {
                 <h3 className="text-xl font-semibold mb-2 text-neutral-200">
                   Phone
                 </h3>
-                <p className="text-neutral-400">+91 9562039676</p>
+                <p className="text-neutral-400">+91 95620 39676</p>
               </div>
             </div>
             <div className="flex items-start space-x-4">

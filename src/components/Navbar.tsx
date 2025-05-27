@@ -1,20 +1,31 @@
 import { useState } from 'react';
 import { Link as ScrollLink } from 'react-scroll';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import logo from '../images/logo.png';
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const handleLogoClick = () => {
+    if (isHomePage) {
+      // If already on home page, scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      // If on different page, navigate to home
+      navigate('/');
+    }
+  };
 
   const navItems = [
     { name: 'About Us', type: 'scroll', to: 'about-us' },
     { name: 'Services', type: 'scroll', to: 'services' },
-    { name: 'Gallery', type: 'route', to: '/gallery' },
     { name: 'Our Team', type: 'scroll', to: 'our-team' },
+    { name: 'Gallery', type: 'route', to: '/gallery' },
     { name: 'FAQ', type: 'route', to: '/faq' },
     { name: 'Careers', type: 'route', to: '/careers' }
   ];
@@ -44,6 +55,7 @@ const Navbar = () => {
           to={item.to}
           smooth={true}
           duration={500}
+          offset={-80} // Account for fixed navbar height
           className="text-white hover:text-gray-300 cursor-pointer"
         >
           <motion.span
@@ -80,15 +92,14 @@ const Navbar = () => {
         className="fixed w-full bg-black/90 backdrop-blur-sm z-50 px-6 py-4"
       >
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <RouterLink to="/">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="text-white text-2xl font-bold flex items-center gap-2"
-            >
-              <img src={logo} alt="E&S Logo" className="w-12 h-12 object-contain" />
-              <span>E&S</span>
-            </motion.div>
-          </RouterLink>
+          <motion.div
+            onClick={handleLogoClick}
+            whileHover={{ scale: 1.05 }}
+            className="text-white text-2xl font-bold flex items-center gap-2 cursor-pointer"
+          >
+            <img src={logo} alt="E&S Logo" className="w-12 h-12 object-contain" />
+            <span>E&S</span>
+          </motion.div>
 
           <div className="hidden md:flex gap-8">
             {navItems.map(item => renderNavItem(item))}
@@ -147,6 +158,7 @@ const Navbar = () => {
                         to={item.to}
                         smooth={true}
                         duration={500}
+                        offset={-80} // Account for fixed navbar height
                         onClick={() => setIsSidebarOpen(false)}
                         className="text-white hover:text-gray-300 cursor-pointer text-lg"
                       >

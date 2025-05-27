@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import AboutSection from './components/AboutSection';
@@ -20,6 +20,57 @@ import ParticlesBackground from './components/ParticlesBackground';
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem('adminToken');
   return isAuthenticated ? <>{children}</> : <Navigate to="/admin/login" />;
+};
+
+// Main page component with scroll handling
+const MainPage = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if there's a hash in the URL (like #services)
+    if (location.hash) {
+      // Wait for the page to load completely before scrolling
+      const timer = setTimeout(() => {
+        const element = document.querySelector(location.hash);
+        if (element) {
+          element.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      }, 2000); // Wait for animations and loading to complete
+
+      return () => clearTimeout(timer);
+    }
+  }, [location.hash]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.5 }}
+      className="bg-black text-white relative"
+    >
+      <ParticlesBackground />
+      <Navbar />
+      <HeroSection />
+      <div id="about-us">
+        <AboutSection />
+      </div>
+      <div id="latest-work">
+        <LatestSection />
+      </div>
+      <div id="services">
+        <ServicesSection />
+      </div>
+      <div id="our-team">
+        <TeamSection />
+      </div>
+      <div id="contact">
+        <ContactSection />
+      </div>
+    </motion.div>
+  );
 };
 
 // Page transition wrapper component
@@ -110,21 +161,7 @@ function App() {
           path="/"
           element={
             <PageTransitionWrapper>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="bg-black text-white relative"
-              >
-                <ParticlesBackground />
-                <Navbar />
-                <HeroSection />
-                <AboutSection />
-                <LatestSection />
-                <ServicesSection />
-                <TeamSection />
-                <ContactSection />
-              </motion.div>
+              <MainPage />
             </PageTransitionWrapper>
           }
         />
