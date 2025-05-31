@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Linkedin, Twitter, Mail } from 'lucide-react';
+import { Award, Users, Calendar, Star } from 'lucide-react';
 import eapenImage from '../images/EAPEN.jpg';
 import sibyImage from '../images/SIBY.jpg';
 import { Spotlight } from './ui/spotlight-new';
@@ -10,11 +10,17 @@ const team = [
     name: 'Mr Siby',
     role: 'Event Director',
     image: sibyImage,
+    expertise: ['Full Auditorium Decoration', 'Premium Material Coordination', 'Client Consultation & Planning'],
+    experience: '30+ Years Experience',
+    speciality: 'Hall Transformations & Luxury Themes'
   },
   {
     name: 'Mr Eapen',
     role: 'Creative Lead',
     image: eapenImage,
+    expertise: ['Premium Catering Menus', 'Luxury Car Rental Coordination', 'Guest Experience Planning'],
+    experience: '30+ Years Experience',
+    speciality: 'Premium Catering & Guest Experiences'
   },
 ];
 
@@ -52,31 +58,41 @@ const TeamSection = () => {
                   alt={member.name}
                   className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <div className="flex gap-4 justify-center mb-4">
-                      <motion.a
-                        whileHover={{ y: -2 }}
-                        className="text-white hover:text-gray-300"
-                        href="#"
-                      >
-                        <Linkedin className="w-5 h-5" />
-                      </motion.a>
-                      <motion.a
-                        whileHover={{ y: -2 }}
-                        className="text-white hover:text-gray-300"
-                        href="#"
-                      >
-                        <Twitter className="w-5 h-5" />
-                      </motion.a>
-                      <motion.a
-                        whileHover={{ y: -2 }}
-                        className="text-white hover:text-gray-300"
-                        href="#"
-                      >
-                        <Mail className="w-5 h-5" />
-                      </motion.a>
-                    </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                      className="space-y-3"
+                    >
+                      {/* Experience Badge */}
+                      <div className="flex items-center justify-center gap-2 mb-3">
+                        <Award className="w-4 h-4 text-yellow-400" />
+                        <span className="text-sm font-semibold text-yellow-400">{member.experience}</span>
+                      </div>
+                      
+                      {/* Speciality */}
+                      <div className="flex items-center justify-center gap-2 mb-3">
+                        <Star className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm text-blue-400">{member.speciality}</span>
+                      </div>
+                      
+                      {/* Expertise Tags */}
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-300 mb-2">Key Expertise:</p>
+                        <div className="flex flex-wrap justify-center gap-1">
+                          {member.expertise.map((skill, skillIndex) => (
+                            <span
+                              key={skillIndex}
+                              className="px-2 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-white border border-white/20"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
                   </div>
                 </div>
               </div>

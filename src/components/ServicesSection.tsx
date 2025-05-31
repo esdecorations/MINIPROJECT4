@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Cake, Camera, Music, Sparkles, Users, Utensils } from 'lucide-react';
+import { Cake, Camera, Music, Sparkles, Users, Utensils, Palette, Smile, Heart } from 'lucide-react';
 import { BackgroundBeams } from './ui/background-beams';
 
 const services = [
@@ -39,6 +39,24 @@ const services = [
     title: 'Corporate Event Management',
     description: 'Our comprehensive corporate event management services handle everything from planning to execution, ensuring successful business gatherings.',
     image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070'
+  },
+  {
+    icon: Heart,
+    title: 'Henna Services',
+    description: 'Add a special touch to your event with our skilled henna artists, creating beautiful, intricate designs to delight your guests.',
+    image: 'https://lavenderbeauty.ae/wp-content/uploads/2020/04/henna.jpg'
+  },
+  {
+    icon: Smile,
+    title: 'Balloon Art',
+    description: 'Bring fun and color to your event with our creative balloon art services, perfect for adding a playful and memorable touch for all ages.',
+    image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?q=80&w=2070'
+  },
+  {
+    icon: Palette,
+    title: 'Caricature',
+    description: 'Capture the laughter and joy of your event with our caricature artists, turning your guests into fun and memorable portraits to take home!',
+    image: 'https://media.istockphoto.com/id/458594461/photo/caricature-artist.jpg?s=612x612&w=0&k=20&c=wWkFqGu0uYcwgCF_GpRnoCnJddU9cuebiSbV1o9DD9Y='
   }
 ];
 

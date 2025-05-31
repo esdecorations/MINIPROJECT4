@@ -97,8 +97,51 @@ const Navbar = () => {
             whileHover={{ scale: 1.05 }}
             className="text-white text-2xl font-bold flex items-center gap-2 cursor-pointer"
           >
-            <img src={logo} alt="E&S Logo" className="w-12 h-12 object-contain" />
-            <span>E&S</span>
+            <motion.div
+              animate={{ 
+                rotate: [0, 5, -5, 0],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ 
+                duration: 3,
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut"
+              }}
+              whileHover={{
+                rotate: 360,
+                transition: { duration: 0.6 }
+              }}
+              className="relative"
+            >
+              <img src={logo} alt="E&S Logo" className="w-12 h-12 object-contain" />
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-blue-500/30"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.6, 0.3]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            </motion.div>
+            <motion.span
+              animate={{
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="bg-gradient-to-r from-white via-blue-300 to-white bg-300% bg-clip-text text-transparent"
+              style={{ backgroundSize: "300% 100%" }}
+            >
+              E&S
+            </motion.span>
           </motion.div>
 
           <div className="hidden md:flex gap-8">
