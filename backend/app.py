@@ -10,10 +10,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 import datetime
 from bson import ObjectId, errors
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+# REMOVED: from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from typing import List, Optional
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 import magic
@@ -25,6 +23,9 @@ from PIL import Image
 import httpx
 from collections import defaultdict
 from fastapi import Request
+
+# NEW: Import Resend SDK
+import resend
 
 try:
     from pillow_heif import register_heif_opener
@@ -235,18 +236,37 @@ image_compressor = SmartImageCompressor()
 # Load environment variables
 load_dotenv()
 
-# Email Configuration
-email_conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=int(os.getenv("MAIL_PORT", "587")),
-    MAIL_SERVER=os.getenv("MAIL_SERVER"),
-    MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME"),
-    MAIL_STARTTLS=True,
-    MAIL_SSL_TLS=False,
-    USE_CREDENTIALS=True
-)
+# NEW: Configure Resend API
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+if not RESEND_API_KEY:
+    raise ValueError("RESEND_API_KEY environment variable is required")
+
+resend.api_key = RESEND_API_KEY
+
+# Email sender configuration
+# Option 1: Use Resend sandbox domain for testing (works immediately)
+EMAIL_FROM = "E&S Decorations <onboarding@resend.dev>"
+
+# Option 2: Use your own verified domain (uncomment when you have one)
+# EMAIL_FROM = "E&S Decorations <noreply@yourdomain.com>"
+
+# Option 3: Use Gmail (won't work - Gmail domains can't be verified)
+# EMAIL_FROM = "E&S Decorations <esdecorationsind@gmail.com>"
+
+EMAIL_FROM_NAME = "E&S Decorations"
+
+# REMOVED: Old email configuration
+# email_conf = ConnectionConfig(
+#     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+#     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
+#     MAIL_FROM=os.getenv("MAIL_FROM"),
+#     MAIL_PORT=int(os.getenv("MAIL_PORT", "587")),
+#     MAIL_SERVER=os.getenv("MAIL_SERVER"),
+#     MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME"),
+#     MAIL_STARTTLS=True,
+#     MAIL_SSL_TLS=False,
+#     USE_CREDENTIALS=True
+# )
 
 # Constants
 SECRET_KEY = os.getenv("SECRET_KEY", "miniproject")
@@ -285,8 +305,8 @@ job_applications_collection = db["job_applications"]
 job_listings_collection = db["job_listings"]
 events_collection = db["events"]  
 
-# Initialize FastMail
-fm = FastMail(email_conf)
+# REMOVED: Initialize FastMail
+# fm = FastMail(email_conf)
 
 # Event Models
 class EventBase(BaseModel):
@@ -391,44 +411,118 @@ async def delete_event(event_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# NEW: Updated function to send acceptance email using Resend
 async def send_acceptance_email(applicant_name: str, applicant_email: str):
-    # Create the email content
-    subject = "Welcome to E&S Decorations!"
-    
-    # HTML version of the email
-    html_content = f"""
-    <p>Dear {applicant_name},</p>
-    <p>Thank you for your interest in E&S Decorations. After reviewing your application, we are pleased to offer you a position on our team!</p>
-    <p>Our recruiting team will be in touch soon with the next steps, including contract signing, onboarding details, and your official start date. If you have any questions, feel free to reach out.</p>
-    <p>We look forward to working with you!</p>
-    <p>Best regards,<br>E&S Decorations Recruiting Team</p>
-    """
-    
-    # Plain text version of the email
-    plain_text = f"""
-    Dear {applicant_name},
+    """Send job acceptance email using Resend API"""
+    try:
+        # Create the email content
+        subject = "Welcome to E&S Decorations!"
+        
+        # HTML version of the email
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Welcome to E&S Decorations</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to E&S Decorations!</h1>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <p style="font-size: 18px; margin-bottom: 20px;">Dear <strong>{applicant_name}</strong>,</p>
+                
+                <p style="margin-bottom: 20px;">
+                    Thank you for your interest in E&S Decorations. After reviewing your application, 
+                    we are <strong style="color: #667eea;">pleased to offer you a position</strong> on our team!
+                </p>
+                
+                <div style="background: #e8f4fd; padding: 20px; border-left: 4px solid #667eea; margin: 20px 0;">
+                    <p style="margin: 0; font-weight: bold; color: #667eea;">What's Next?</p>
+                    <p style="margin: 10px 0 0 0;">
+                        Our recruiting team will be in touch soon with the next steps, including:
+                    </p>
+                    <ul style="margin: 10px 0 0 20px;">
+                        <li>Contract signing details</li>
+                        <li>Onboarding information</li>
+                        <li>Your official start date</li>
+                    </ul>
+                </div>
+                
+                <p style="margin-bottom: 20px;">
+                    If you have any questions in the meantime, feel free to reach out to us. 
+                    We're excited to have you join our growing team!
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <div style="background: #667eea; color: white; padding: 15px 30px; border-radius: 25px; display: inline-block;">
+                        <strong>🎉 Welcome Aboard! 🎉</strong>
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 5px;"><strong>Best regards,</strong></p>
+                <p style="margin-top: 0; color: #667eea; font-weight: bold;">E&S Decorations Recruiting Team</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">
+                <p>© 2025 E&S Decorations. All rights reserved.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Plain text version of the email
+        plain_text = f"""
+        Dear {applicant_name},
 
-    Thank you for your interest in E&S Decorations. After reviewing your application, we are pleased to offer you a position on our team!
+        Thank you for your interest in E&S Decorations. After reviewing your application, we are pleased to offer you a position on our team!
 
-    Our recruiting team will be in touch soon with the next steps, including contract signing, onboarding details, and your official start date. If you have any questions, feel free to reach out.
+        What's Next?
+        Our recruiting team will be in touch soon with the next steps, including:
+        • Contract signing details
+        • Onboarding information  
+        • Your official start date
 
-    We look forward to working with you!
+        If you have any questions in the meantime, feel free to reach out to us. We're excited to have you join our growing team!
 
-    Best regards,
-    E&S Decorations Recruiting Team
-    """
+        🎉 Welcome Aboard! 🎉
 
-    # Create message schema
-    message = MessageSchema(
-        subject=subject,
-        recipients=[applicant_email],
-        body=html_content,
-        subtype="html",
-        alternatives=[(plain_text, "plain")]
-    )
+        Best regards,
+        E&S Decorations Recruiting Team
 
-    # Send the email
-    await fm.send_message(message)
+        © 2025 E&S Decorations. All rights reserved.
+        """
+
+        # Send email using Resend
+        params: resend.Emails.SendParams = {
+            "from": EMAIL_FROM,
+            "to": [applicant_email],
+            "subject": subject,
+            "html": html_content,
+            "text": plain_text,
+            "reply_to": "esdecorationsind@gmail.com"
+        }
+
+        email_response = resend.Emails.send(params)
+        
+        # Handle different response formats
+        email_id = None
+        if hasattr(email_response, 'id'):
+            email_id = email_response.id
+        elif isinstance(email_response, dict) and 'id' in email_response:
+            email_id = email_response['id']
+        else:
+            email_id = "unknown"
+            
+        print(f"✅ Acceptance email sent successfully to {applicant_email}. Email ID: {email_id}")
+        return email_response
+
+    except Exception as e:
+        print(f"❌ Error sending acceptance email: {str(e)}")
+        raise Exception(f"Failed to send acceptance email: {str(e)}")
 
 # Models
 class EmailSchema(BaseModel):
@@ -459,8 +553,6 @@ class FAQ(BaseModel):
     question: str
     answer: str
     category: str
-
-
 
 # Job Listing Model
 class JobListing(BaseModel):
@@ -742,7 +834,7 @@ async def solve_inquiry(inquiry_id: str):
         print(f"Error marking inquiry as solved: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Send Reply to Inquiry
+# NEW: Updated function to send reply using Resend
 @app.post("/inquiries/{inquiry_id}/reply")
 async def reply_to_inquiry(inquiry_id: str, reply: ReplySchema):
     try:
@@ -760,20 +852,113 @@ async def reply_to_inquiry(inquiry_id: str, reply: ReplySchema):
         if not recipient_email:
             raise HTTPException(status_code=400, detail="Inquiry has no associated email")
 
-        # Initialize FastMail
-        fm = FastMail(email_conf)
+        recipient_name = inquiry.get("name", "Valued Customer")
+        original_subject = inquiry.get("subject", "Your Inquiry")
 
-        # Create message schema
-        message = MessageSchema(
-            subject="Reply to Your Inquiry - E&S Decorations",
-            recipients=[recipient_email],
-            body=reply.html_body,
-            subtype="html",
-            alternatives=[(reply.plain_text_body, "plain")]
-        )
+        # Create professional reply email
+        subject = f"Re: {original_subject} - E&S Decorations"
+        
+        # Enhanced HTML version
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reply from E&S Decorations</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 24px;">E&S Decorations</h1>
+                <p style="color: #f0f0f0; margin: 10px 0 0 0; font-size: 14px;">Thank you for reaching out to us</p>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>{recipient_name}</strong>,</p>
+                
+                <p style="margin-bottom: 20px;">
+                    Thank you for contacting E&S Decorations. We have received your inquiry and are pleased to respond:
+                </p>
+                
+                <div style="background: white; padding: 20px; border-left: 4px solid #667eea; margin: 20px 0; border-radius: 5px;">
+                    <p style="margin: 0; color: #666; font-size: 14px; font-weight: bold;">Your Original Message:</p>
+                    <p style="margin: 10px 0 0 0; font-style: italic; color: #555;">"{inquiry.get('message', '')[:150]}{'...' if len(inquiry.get('message', '')) > 150 else ''}"</p>
+                </div>
+                
+                <div style="background: #e8f4fd; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                    <p style="margin: 0; font-weight: bold; color: #667eea; margin-bottom: 15px;">Our Response:</p>
+                    <div style="color: #333; line-height: 1.6;">
+                        {reply.html_body}
+                    </div>
+                </div>
+                
+                <div style="margin: 30px 0; padding: 15px; background: #f0f8ff; border-radius: 5px; text-align: center;">
+                    <p style="margin: 0; color: #667eea; font-weight: bold;">Need further assistance?</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px;">Feel free to reply to this email or contact us directly.</p>
+                </div>
+                
+                <p style="margin-bottom: 5px;"><strong>Best regards,</strong></p>
+                <p style="margin-top: 0; color: #667eea; font-weight: bold;">E&S Decorations Team</p>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+                    <p style="margin: 0;">📧 Email: esdecorationsind@gmail.com</p>
+                    <p style="margin: 5px 0 0 0;">🌐 Creating beautiful spaces since [Year]</p>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">
+                <p>© 2025 E&S Decorations. All rights reserved.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Enhanced plain text version
+        plain_text = f"""
+Dear {recipient_name},
 
-        # Send email
-        await fm.send_message(message)
+Thank you for contacting E&S Decorations. We have received your inquiry and are pleased to respond:
+
+Your Original Message:
+"{inquiry.get('message', '')[:150]}{'...' if len(inquiry.get('message', '')) > 150 else ''}"
+
+Our Response:
+{reply.plain_text_body}
+
+Need further assistance?
+Feel free to reply to this email or contact us directly.
+
+Best regards,
+E&S Decorations Team
+
+📧 Email: esdecorationsind@gmail.com
+🌐 Creating beautiful spaces since [Year]
+
+© 2025 E&S Decorations. All rights reserved.
+        """
+
+        # Send email using Resend
+        params: resend.Emails.SendParams = {
+            "from": EMAIL_FROM,
+            "to": [recipient_email],
+            "subject": subject,
+            "html": html_content,
+            "text": plain_text,
+            "reply_to": "esdecorationsind@gmail.com"
+        }
+
+        email_response = resend.Emails.send(params)
+        
+        # Handle different response formats
+        email_id = None
+        if hasattr(email_response, 'id'):
+            email_id = email_response.id
+        elif isinstance(email_response, dict) and 'id' in email_response:
+            email_id = email_response['id']
+        else:
+            email_id = "unknown"
+            
+        print(f"✅ Reply email sent successfully to {recipient_email}. Email ID: {email_id}")
 
         # Update inquiry status
         await contacts_collection.update_one(
@@ -781,7 +966,8 @@ async def reply_to_inquiry(inquiry_id: str, reply: ReplySchema):
             {"$set": {"is_solved": True}}
         )
 
-        return {"message": "Reply sent successfully"}
+        return {"message": "Reply sent successfully", "email_id": email_id}
+        
     except Exception as e:
         logging.error(f"Error sending reply: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to send reply")
@@ -1287,13 +1473,13 @@ async def test_compression(file: UploadFile = File(...)):
             "original_size_mb": round(file_size / (1024*1024), 2),
             "compression_needed": file_size > image_compressor.MAX_SIZE_BYTES,
             "standard_compression": {
-                "size": metadata['compressed_size'],
-                "size_mb": round(metadata['compressed_size'] / (1024*1024), 2),
+                "size": metadata['final_size'],
+                "size_mb": round(metadata['final_size'] / (1024*1024), 2),
                 "savings": metadata['savings_percent']
             },
             "progressive_compression": {
-                "size": progressive_metadata['compressed_size'],
-                "size_mb": round(progressive_metadata['compressed_size'] / (1024*1024), 2),
+                "size": progressive_metadata['final_size'],
+                "size_mb": round(progressive_metadata['final_size'] / (1024*1024), 2),
                 "savings": progressive_metadata['savings_percent']
             }
         }
@@ -1352,3 +1538,65 @@ async def delete_latest_work(work_id: str):
         raise HTTPException(status_code=400, detail="Invalid work ID format")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# NEW: Test endpoint to verify Resend integration
+@app.post("/test-email")
+async def test_email_sending():
+    """Test endpoint to verify Resend API is working correctly"""
+    try:
+        params: resend.Emails.SendParams = {
+            "from": EMAIL_FROM,
+            "to": ["esdecorationsind@gmail.com"],  # Send test email to yourself
+            "subject": "🧪 E&S Decorations - Resend API Test",
+            "html": """
+            <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+                <div style="max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px;">
+                    <h2 style="color: #667eea; text-align: center;">✅ Resend API Test Successful!</h2>
+                    <p>This is a test email to verify that Resend API integration is working correctly with your E&S Decorations website.</p>
+                    <p><strong>Test Details:</strong></p>
+                    <ul>
+                        <li>API Integration: ✅ Working</li>
+                        <li>Email Sending: ✅ Successful</li>
+                        <li>From Address: esdecorationsind@gmail.com</li>
+                        <li>Test Time: Just now</li>
+                    </ul>
+                    <p style="text-align: center; margin-top: 30px;">
+                        <span style="background: #667eea; color: white; padding: 10px 20px; border-radius: 5px;">
+                            🎉 Ready for Production!
+                        </span>
+                    </p>
+                </div>
+            </div>
+            """,
+            "text": "✅ Resend API Test Successful! This test email confirms that Resend API integration is working correctly with your E&S Decorations website.",
+            "reply_to": "esdecorationsind@gmail.com"
+        }
+
+        email_response = resend.Emails.send(params)
+        
+        # Handle different response formats
+        email_id = None
+        if hasattr(email_response, 'id'):
+            email_id = email_response.id
+        elif isinstance(email_response, dict) and 'id' in email_response:
+            email_id = email_response['id']
+        else:
+            email_id = "unknown"
+            
+        return {
+            "success": True,
+            "message": "Test email sent successfully!",
+            "email_id": email_id,
+            "from": EMAIL_FROM,
+            "to": "esdecorationsind@gmail.com"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to send test email. Please check your Resend API configuration."
+        }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
