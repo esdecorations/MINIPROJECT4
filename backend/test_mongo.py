@@ -4,14 +4,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+MONGODB_URL = os.getenv("MONGODB_URL")
 DB_NAME = os.getenv("DB_NAME", "ESWEBSITE")
 
-print(f"Connecting to {MONGODB_URL}...")
+print(f"Attempting to connect to MongoDB Atlas...")
 
 try:
-    client = AsyncIOMotorClient(MONGODB_URL)
+    client = AsyncIOMotorClient(
+        MONGODB_URL,
+        tls=True,
+        tlsAllowInvalidCertificates=True  # Only if needed for development
+    )
     database = client[DB_NAME]
-    print("✅ Connected successfully!")
+    # Test the connection
+    client.admin.command('ping')
+    print("✅ Successfully connected to MongoDB Atlas!")
 except Exception as e:
     print(f"❌ Connection failed: {e}")

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://127.0.0.1:27017")
+MONGODB_URL = os.getenv("MONGODB_URL")
 DB_NAME = os.getenv("DB_NAME", "ESWEBSITE")
 
 # Ensure variables are set correctly
@@ -14,12 +14,16 @@ if not MONGODB_URL:
 if not DB_NAME:
     raise ValueError("DB_NAME is not set!")
 
-# Create MongoDB client
-client = AsyncIOMotorClient(MONGODB_URL)
+# Create MongoDB client with TLS/SSL settings for Atlas
+client = AsyncIOMotorClient(
+    MONGODB_URL,
+    tls=True,
+    tlsAllowInvalidCertificates=True  # Only if needed for development
+)
 database = client[DB_NAME]
 
 # Debugging
-print(f"Connected to MongoDB at {MONGODB_URL}, Database: {DB_NAME}")
+print(f"Connected to MongoDB Atlas Database: {DB_NAME}")
 
 # Initialize collections
 contacts_collection = database["contacts"]
@@ -38,4 +42,4 @@ async def init_db():
     print("Database indexes created successfully")
 
 # Export collections
-__all__ = ["database", "contacts_collection", "admins_collection", "init_db"]
+_all_ = ["database", "contacts_collection", "admins_collection", "init_db"]
