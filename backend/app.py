@@ -16,6 +16,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
+import magic
+from typing import Tuple, Dict, Any
 import logging
 import base64
 import io
@@ -23,6 +25,212 @@ from PIL import Image
 import httpx
 from collections import defaultdict
 from fastapi import Request
+
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    HEIC_SUPPORTED = True
+    print("✅ HEIC support enabled")
+except ImportError:
+    HEIC_SUPPORTED = False
+    print("⚠️ HEIC support not available - install pillow-heif")
+
+class SmartImageCompressor:
+    MAX_SIZE_BYTES = 15 * 1024 * 1024  # 15MB threshold
+    MAX_FILE_SIZE = 50 * 1024 * 1024   # 50MB absolute maximum
+    
+    @staticmethod
+    def is_image_by_filename(filename: str) -> bool:
+        """Validate by file extension - includes HEIC"""
+        if not filename:
+            return False
+        
+        # Include HEIC since we can process them
+        valid_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif', '.heic', '.heif'}
+        
+        try:
+            file_extension = filename.lower().split('.')[-1]
+            return f'.{file_extension}' in valid_extensions
+        except:
+            return False
+    
+    @staticmethod
+    def is_image(file_content: bytes) -> Tuple[bool, str]:
+        """Validate if file is a valid image using PIL"""
+        try:
+            if not file_content or len(file_content) == 0:
+                return False, "File is empty"
+            
+            # Try to open the image with PIL (should work with HEIC if pillow-heif is installed)
+            image = Image.open(io.BytesIO(file_content))
+            
+            # Get basic info
+            width, height = image.size
+            format_type = image.format or "Unknown"
+            
+            # Check if dimensions are reasonable
+            if width <= 0 or height <= 0:
+                return False, "Invalid image dimensions"
+            
+            if width > 20000 or height > 20000:
+                return False, "Image dimensions too large (max 20000x20000)"
+            
+            # Verify the image by loading it
+            image.verify()
+            return True, f"Valid {format_type} image ({width}x{height})"
+            
+        except Exception as e:
+            return False, f"Invalid image file: {str(e)}"
+    
+    @staticmethod
+    def convert_to_web_format(
+        image_bytes: bytes,
+        max_width: int = 1920,
+        max_height: int = 1080,
+        quality: int = 85
+    ) -> Tuple[bytes, Dict[str, Any]]:
+        """Convert ANY image format to web-compatible JPEG"""
+        
+        original_size = len(image_bytes)
+        
+        try:
+            # Open image (works with HEIC if pillow-heif is installed)
+            image = Image.open(io.BytesIO(image_bytes))
+            original_dimensions = image.size
+            original_format = image.format or "Unknown"
+            original_mode = image.mode
+            
+            print(f"   📸 Converting {original_format} to JPEG: {original_dimensions} {original_mode}")
+            
+            # ALWAYS convert to RGB for consistent JPEG output
+            if image.mode in ('RGBA', 'LA', 'P'):
+                print(f"   🎨 Converting {image.mode} to RGB")
+                background = Image.new('RGB', image.size, (255, 255, 255))
+                if image.mode == 'P':
+                    image = image.convert('RGBA')
+                if image.mode in ('RGBA', 'LA'):
+                    background.paste(image, mask=image.split()[-1])
+                    image = background
+            elif image.mode != 'RGB':
+                print(f"   🎨 Converting {image.mode} to RGB")
+                image = image.convert('RGB')
+            
+            # Resize if needed
+            if image.size[0] > max_width or image.size[1] > max_height:
+                print(f"   📐 Resizing from {image.size} to fit {max_width}x{max_height}")
+                image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+            
+            # ALWAYS save as JPEG for web compatibility
+            output = io.BytesIO()
+            image.save(output, format='JPEG', quality=quality, optimize=True)
+            jpeg_bytes = output.getvalue()
+            
+            # Calculate stats
+            final_size = len(jpeg_bytes)
+            compression_ratio = final_size / original_size
+            savings_percent = round((1 - compression_ratio) * 100, 1)
+            
+            metadata = {
+                'original_size': original_size,
+                'final_size': final_size,
+                'original_dimensions': original_dimensions,
+                'final_dimensions': image.size,
+                'original_format': original_format,
+                'final_format': 'JPEG',
+                'original_mode': original_mode,
+                'compression_ratio': round(compression_ratio, 3),
+                'savings_percent': savings_percent,
+                'quality_used': quality,
+                'method': 'converted_to_jpeg',
+                'web_compatible': True
+            }
+            
+            return jpeg_bytes, metadata
+            
+        except Exception as e:
+            raise Exception(f"Image conversion failed: {str(e)}")
+    
+    @staticmethod
+    def compress_image(
+        image_bytes: bytes,
+        max_width: int = 1920,
+        max_height: int = 1080,
+        quality: int = 85
+    ) -> Tuple[bytes, Dict[str, Any]]:
+        """Compress image (wrapper for convert_to_web_format)"""
+        return SmartImageCompressor.convert_to_web_format(
+            image_bytes, max_width, max_height, quality
+        )
+    
+    @staticmethod
+    def progressive_compress(
+        image_bytes: bytes,
+        target_size: int = 5 * 1024 * 1024  # 5MB target
+    ) -> Tuple[bytes, Dict[str, Any]]:
+        """Progressive compression - always outputs JPEG"""
+        
+        print(f"   🎯 Target size: {target_size / (1024*1024):.1f}MB")
+        
+        # Try different quality levels
+        quality_levels = [85, 75, 65, 55, 45, 35]
+        
+        for quality in quality_levels:
+            try:
+                print(f"   🔧 Trying quality {quality}")
+                jpeg_bytes, metadata = SmartImageCompressor.convert_to_web_format(
+                    image_bytes, quality=quality
+                )
+                
+                if len(jpeg_bytes) <= target_size:
+                    print(f"   ✅ Target achieved with quality {quality}")
+                    metadata['compression_level'] = 'progressive'
+                    metadata['target_achieved'] = True
+                    return jpeg_bytes, metadata
+                    
+            except Exception as e:
+                print(f"   ⚠️ Quality {quality} failed: {e}")
+                continue
+        
+        # Try dimension reduction
+        try:
+            scale_factors = [0.8, 0.6, 0.4, 0.3]
+            
+            for scale in scale_factors:
+                max_w = int(1920 * scale)
+                max_h = int(1080 * scale)
+                
+                print(f"   📏 Trying {scale*100}% scale ({max_w}x{max_h})")
+                
+                jpeg_bytes, metadata = SmartImageCompressor.convert_to_web_format(
+                    image_bytes,
+                    max_width=max_w,
+                    max_height=max_h,
+                    quality=35
+                )
+                
+                if len(jpeg_bytes) <= target_size:
+                    print(f"   ✅ Target achieved with {scale*100}% scale")
+                    metadata['compression_level'] = 'progressive_with_resize'
+                    metadata['scale_factor'] = scale
+                    metadata['target_achieved'] = True
+                    return jpeg_bytes, metadata
+                    
+        except Exception as e:
+            print(f"   ⚠️ Progressive resize failed: {e}")
+        
+        # Best effort fallback
+        try:
+            jpeg_bytes, metadata = SmartImageCompressor.convert_to_web_format(
+                image_bytes, quality=20, max_width=800, max_height=600
+            )
+            metadata['compression_level'] = 'maximum_effort'
+            metadata['target_achieved'] = False
+            return jpeg_bytes, metadata
+        except Exception as e:
+            raise Exception(f"All compression methods failed: {str(e)}")
+
+# Initialize the compressor
+image_compressor = SmartImageCompressor()
 
 # Load environment variables
 load_dotenv()
@@ -841,29 +1049,122 @@ async def delete_faq(faq_id: str):
 @app.post("/upload-image")
 async def upload_image(file: UploadFile = File(...)):
     try:
-        # Read the file content
-        contents = await file.read()
+        print(f"\n🚀 Starting upload for: {file.filename}")
         
-        # Open image using PIL
-        image = Image.open(io.BytesIO(contents))
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No filename provided")
         
-        # Convert to RGB if needed
-        if image.mode in ('RGBA', 'LA'):
-            image = image.convert('RGB')
+        file_content = await file.read()
+        
+        if len(file_content) == 0:
+            raise HTTPException(status_code=400, detail="File is empty")
+        
+        if len(file_content) > image_compressor.MAX_FILE_SIZE:
+            max_mb = image_compressor.MAX_FILE_SIZE / (1024*1024)
+            raise HTTPException(
+                status_code=400, 
+                detail=f"File too large. Maximum size is {max_mb}MB"
+            )
+        
+        if not image_compressor.is_image_by_filename(file.filename):
+            raise HTTPException(
+                status_code=400, 
+                detail="File type not supported. Please upload: JPG, PNG, GIF, BMP, WebP, TIFF, or HEIC"
+            )
+        
+        is_valid, validation_message = image_compressor.is_image(file_content)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=validation_message)
+        
+        print(f"✅ Validation passed: {validation_message}")
+        
+        file_size = len(file_content)
+        print(f"📏 File size: {file_size:,} bytes ({file_size / (1024*1024):.2f} MB)")
+        
+        # Check if it's a HEIC file - always convert these
+        is_heic = file.filename.lower().endswith(('.heic', '.heif'))
+        
+        if file_size > image_compressor.MAX_SIZE_BYTES or is_heic:
+            if is_heic:
+                print(f"🔄 HEIC file detected - converting to JPEG for web compatibility")
+            else:
+                print(f"🗜️  File exceeds 15MB - applying compression")
             
-        # Create a buffer to store the compressed image
-        buffer = io.BytesIO()
+            try:
+                if file_size > 25 * 1024 * 1024:
+                    final_content, metadata = image_compressor.progressive_compress(file_content)
+                else:
+                    final_content, metadata = image_compressor.convert_to_web_format(file_content)
+                
+                compression_applied = True
+                
+                if is_heic:
+                    print(f"✅ HEIC converted to JPEG: {metadata.get('savings_percent', 0)}% size change")
+                else:
+                    print(f"✅ Compressed: {metadata['savings_percent']}% savings")
+                
+            except Exception as e:
+                print(f"❌ Processing failed: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Image processing failed: {str(e)}")
+            
+        else:
+            print(f"✨ File within 15MB limit")
+            # Still convert to JPEG for consistency (optional)
+            try:
+                final_content, metadata = image_compressor.convert_to_web_format(file_content, quality=95)
+                compression_applied = True
+                print(f"🔄 Converted to JPEG for web compatibility")
+            except:
+                # Fallback to original if conversion fails
+                final_content = file_content
+                compression_applied = False
+                metadata = {
+                    'original_size': file_size,
+                    'final_size': file_size,
+                    'compression_ratio': 1.0,
+                    'savings_percent': 0,
+                    'method': 'no_processing',
+                    'reason': 'under_15mb_limit'
+                }
         
-        # Save the image with compression
-        image.save(buffer, format='JPEG', quality=85, optimize=True)
-        buffer.seek(0)
+        # Convert to base64 - this should now always be a JPEG
+        base64_string = base64.b64encode(final_content).decode('utf-8')
         
-        # Convert to base64
-        img_str = base64.b64encode(buffer.getvalue()).decode()
+        print(f"🎯 Final: {len(final_content):,} bytes as JPEG")
         
-        return {"image": img_str}
+        return {
+            "image": base64_string,
+            "compression_applied": compression_applied,
+            "metadata": metadata,
+            "file_info": {
+                "filename": file.filename,
+                "original_size": file_size,
+                "final_size": len(final_content),
+                "content_type": "image/jpeg",  # Always JPEG output
+                "web_compatible": True
+            }
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"💥 Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+@app.get("/compression-stats")
+async def get_compression_stats():
+    """Get compression statistics from recent uploads"""
+    try:
+        # You could track these in a separate collection if needed
+        return {
+            "max_size_limit": f"{image_compressor.MAX_SIZE_BYTES / (1024*1024):.1f} MB",
+            "compression_enabled": True,
+            "supported_formats": ["JPEG", "PNG", "WebP", "GIF", "BMP"],
+            "max_dimensions": "1920x1080",
+            "default_quality": 85
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Gallery Event Management Endpoints
 @app.get("/gallery-events")
@@ -946,6 +1247,14 @@ async def create_latest_work(work: dict):
         if not all(key in work for key in ["title", "thumbnail", "category"]):
             raise HTTPException(status_code=422, detail="Missing required fields")
 
+        # Add compression metadata if available
+        if "compression_metadata" not in work and "thumbnail" in work:
+            # If thumbnail is already processed, add basic metadata
+            work["compression_metadata"] = {
+                "method": "unknown",
+                "processed": True
+            }
+
         # Insert the work into MongoDB
         result = await latest_works_collection.insert_one(work)
         
@@ -955,6 +1264,39 @@ async def create_latest_work(work: dict):
             return created_work
             
         raise HTTPException(status_code=500, detail="Failed to create work")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/test-compression")
+async def test_compression(file: UploadFile = File(...)):
+    """Test endpoint to see compression results without saving"""
+    try:
+        file_content = await file.read()
+        
+        if not image_compressor.is_image(file_content):
+            raise HTTPException(status_code=400, detail="File is not a valid image")
+        
+        file_size = len(file_content)
+        
+        # Always compress for testing
+        compressed_content, metadata = image_compressor.compress_image(file_content)
+        progressive_content, progressive_metadata = image_compressor.progressive_compress(file_content)
+        
+        return {
+            "original_size": file_size,
+            "original_size_mb": round(file_size / (1024*1024), 2),
+            "compression_needed": file_size > image_compressor.MAX_SIZE_BYTES,
+            "standard_compression": {
+                "size": metadata['compressed_size'],
+                "size_mb": round(metadata['compressed_size'] / (1024*1024), 2),
+                "savings": metadata['savings_percent']
+            },
+            "progressive_compression": {
+                "size": progressive_metadata['compressed_size'],
+                "size_mb": round(progressive_metadata['compressed_size'] / (1024*1024), 2),
+                "savings": progressive_metadata['savings_percent']
+            }
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
