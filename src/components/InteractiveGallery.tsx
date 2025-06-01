@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Calendar, MapPin, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Calendar, MapPin, Users, Maximize2 } from 'lucide-react';
 import axios from 'axios';
 
 interface GalleryEvent {
@@ -23,11 +23,12 @@ const InteractiveGallery = () => {
   const [events, setEvents] = useState<GalleryEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false); // New state for fullscreen mode
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/events');
+        const response = await axios.get('http://127.0.0.1:8000/gallery-events');
         setEvents(response.data);
         setError(null);
       } catch (err) {
@@ -41,6 +42,27 @@ const InteractiveGallery = () => {
     fetchEvents();
   }, []);
 
+  // Handle escape key to close fullscreen
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    };
+
+    if (isFullscreen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFullscreen]);
+
   const openEventDetails = (event: GalleryEvent) => {
     setSelectedEvent(event);
     setCurrentImageIndex(0);
@@ -48,6 +70,15 @@ const InteractiveGallery = () => {
 
   const closeEventDetails = () => {
     setSelectedEvent(null);
+    setIsFullscreen(false);
+  };
+
+  const openFullscreen = () => {
+    setIsFullscreen(true);
+  };
+
+  const closeFullscreen = () => {
+    setIsFullscreen(false);
   };
 
   const nextImage = () => {
@@ -145,7 +176,7 @@ const InteractiveGallery = () => {
 
       {/* Event Details Modal */}
       <AnimatePresence>
-        {selectedEvent && (
+        {selectedEvent && !isFullscreen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -180,9 +211,19 @@ const InteractiveGallery = () => {
                       transition={{ duration: 0.5 }}
                       src={selectedEvent.images[currentImageIndex]}
                       alt={`${selectedEvent.title} - Image ${currentImageIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover cursor-pointer"
+                      onClick={openFullscreen}
                     />
                   </AnimatePresence>
+
+                  {/* Fullscreen button */}
+                  <button
+                    onClick={openFullscreen}
+                    className="absolute top-4 left-4 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors"
+                    title="View fullscreen"
+                  >
+                    <Maximize2 className="h-5 w-5" />
+                  </button>
 
                   <button
                     onClick={prevImage}
@@ -286,6 +327,90 @@ const InteractiveGallery = () => {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Full-Screen Image Viewer */}
+      <AnimatePresence>
+        {isFullscreen && selectedEvent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black z-[60] flex items-center justify-center"
+          >
+            {/* Close button */}
+            <button
+              onClick={closeFullscreen}
+              className="absolute top-4 right-4 z-10 bg-black/50 text-white p-3 rounded-full hover:bg-black/70 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            {/* Image counter */}
+            <div className="absolute top-4 left-4 z-10 bg-black/50 text-white px-4 py-2 rounded-full">
+              {currentImageIndex + 1} / {selectedEvent.images.length}
+            </div>
+
+            {/* Main image */}
+            <div className="relative w-full h-full flex items-center justify-center p-4">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentImageIndex}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                  src={selectedEvent.images[currentImageIndex]}
+                  alt={`${selectedEvent.title} - Image ${currentImageIndex + 1}`}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </AnimatePresence>
+
+              {/* Navigation buttons */}
+              {selectedEvent.images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors"
+                  >
+                    <ChevronLeft className="h-8 w-8" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors"
+                  >
+                    <ChevronRight className="h-8 w-8" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnail strip at bottom */}
+            {selectedEvent.images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 rounded-lg p-2">
+                <div className="flex gap-2 max-w-screen-md overflow-x-auto">
+                  {selectedEvent.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden transition-all ${
+                        currentImageIndex === index
+                          ? "ring-2 ring-white opacity-100"
+                          : "opacity-60 hover:opacity-80"
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
