@@ -20,6 +20,9 @@ import logging
 import base64
 import io
 from PIL import Image
+import httpx
+from collections import defaultdict
+from fastapi import Request
 
 # Load environment variables
 load_dotenv()
@@ -41,6 +44,13 @@ email_conf = ConnectionConfig(
 SECRET_KEY = os.getenv("SECRET_KEY", "miniproject")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24  # Token expires after 24 hours
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
+RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
+RECAPTCHA_MINIMUM_SCORE = 0.5
+
+ip_requests = defaultdict(list)
+IP_LIMIT = 3
+TIME_WINDOW = 3600
 
 # FastAPI Instance
 app = FastAPI()
@@ -221,6 +231,7 @@ class Contact(BaseModel):
     email: EmailStr
     subject: str
     message: str
+    recaptcha_token: str = ""
 
 class AdminCreate(BaseModel):
     name: str
@@ -297,24 +308,185 @@ async def get_current_admin(token: str = Depends(oauth2_scheme)):
         return {"email": email}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+async def verify_recaptcha(token: str, client_ip: str) -> dict:
+    """Verify reCAPTCHA token with Google's API"""
+    if not RECAPTCHA_SECRET_KEY or not token:
+        return {"success": False, "score": 0.0, "error": "Missing reCAPTCHA configuration"}
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                RECAPTCHA_VERIFY_URL,
+                data={
+                    "secret": RECAPTCHA_SECRET_KEY,
+                    "response": token,
+                    "remoteip": client_ip
+                },
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return {
+                    "success": result.get("success", False),
+                    "score": result.get("score", 0.0),
+                    "action": result.get("action", ""),
+                    "error": result.get("error-codes", [])
+                }
+            else:
+                return {"success": False, "score": 0.0, "error": "reCAPTCHA verification failed"}
+                
+    except Exception as e:
+        logging.error(f"reCAPTCHA verification error: {e}")
+        return {"success": False, "score": 0.0, "error": str(e)}
+
+def is_rate_limited(client_ip: str) -> bool:
+    """Check if IP address has exceeded rate limit"""
+    now = datetime.datetime.utcnow()
+    
+    ip_requests[client_ip] = [
+        req_time for req_time in ip_requests[client_ip] 
+        if now - req_time < datetime.timedelta(seconds=TIME_WINDOW)
+    ]
+    
+    if len(ip_requests[client_ip]) >= IP_LIMIT:
+        return True
+    
+    ip_requests[client_ip].append(now)
+    return False
+
+def validate_contact_form(contact) -> list:
+    """Validate contact form data and return list of errors"""
+    errors = []
+    
+    if not contact.name.strip():
+        errors.append("Name is required")
+    elif len(contact.name.strip()) < 2:
+        errors.append("Name must be at least 2 characters")
+    elif len(contact.name) > 100:
+        errors.append("Name must be less than 100 characters")
+    
+    if not contact.message.strip():
+        errors.append("Message is required")
+    elif len(contact.message.strip()) < 10:
+        errors.append("Message must be at least 10 characters")
+    elif len(contact.message) > 1000:
+        errors.append("Message must be less than 1000 characters")
+    
+    if len(contact.subject) > 150:
+        errors.append("Subject must be less than 150 characters")
+    
+    return errors
+
+def detect_spam_content(name: str, email: str, message: str, subject: str) -> bool:
+    """Basic spam detection based on content analysis"""
+    spam_keywords = [
+        'viagra', 'casino', 'lottery', 'winner', 'congratulations',
+        'million dollars', 'click here', 'buy now', 'limited time',
+        'crypto', 'bitcoin', 'investment opportunity', 'make money fast'
+    ]
+    
+    content = f"{name} {email} {subject} {message}".lower()
+    spam_score = sum(1 for keyword in spam_keywords if keyword in content)
+    
+    if len([c for c in message if c.isupper()]) > len(message) * 0.7:
+        spam_score += 1
+    
+    if message.count('http://') + message.count('https://') > 2:
+        spam_score += 2
+    
+    import re
+    if re.search(r'(.)\1{4,}', message):
+        spam_score += 1
+    
+    return spam_score >= 2
 
 # Submit Contact Form
 @app.post("/submit")
-async def submit_form(contact: Contact):
+async def submit_form(contact: Contact, request: Request):
     try:
-        contact_data = contact.dict()
-        contact_data["is_solved"] = False  # Default status
-        contact_data["created_at"] = datetime.datetime.utcnow()
+        client_ip = request.client.host
+        
+        # Rate limiting check
+        if is_rate_limited(client_ip):
+            logging.warning(f"Rate limit exceeded for IP: {client_ip}")
+            raise HTTPException(
+                status_code=429, 
+                detail="Too many requests. Please try again in an hour."
+            )
+        
+        # Form validation
+        validation_errors = validate_contact_form(contact)
+        if validation_errors:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Validation errors: {', '.join(validation_errors)}"
+            )
+        
+        # Spam content detection
+        if detect_spam_content(contact.name, contact.email, contact.message, contact.subject):
+            logging.warning(f"Spam content detected from IP: {client_ip}")
+            is_flagged = True
+        else:
+            is_flagged = False
+        
+        # reCAPTCHA verification
+        recaptcha_result = {"success": True, "score": 1.0}
+        if contact.recaptcha_token:
+            recaptcha_result = await verify_recaptcha(contact.recaptcha_token, client_ip)
+            
+            if not recaptcha_result["success"]:
+                logging.warning(f"reCAPTCHA verification failed for IP {client_ip}: {recaptcha_result['error']}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Security verification failed. Please try again."
+                )
+            
+            if recaptcha_result["score"] < RECAPTCHA_MINIMUM_SCORE:
+                logging.warning(f"Low reCAPTCHA score for IP {client_ip}: {recaptcha_result['score']}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Security verification failed. Please try again."
+                )
+            
+            logging.info(f"reCAPTCHA verified for IP {client_ip} with score {recaptcha_result['score']}")
+        else:
+            logging.warning(f"No reCAPTCHA token provided by IP {client_ip}")
+        
+        # Prepare contact data for database
+        contact_data = {
+            "name": contact.name.strip(),
+            "email": contact.email,
+            "subject": contact.subject.strip(),
+            "message": contact.message.strip(),
+            "is_solved": False,
+            "is_flagged": is_flagged,
+            "client_ip": client_ip,
+            "created_at": datetime.datetime.utcnow(),
+            "recaptcha_score": recaptcha_result.get("score", 0.0)
+        }
         
         result = await contacts_collection.insert_one(contact_data)
         
         if not result.acknowledged:
             raise HTTPException(status_code=500, detail="Failed to save contact form")
-            
+        
+        logging.info(f"Contact form submitted successfully by {contact.name} ({contact.email}) from IP {client_ip}")
+        
         return {"message": "Form submitted successfully!"}
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error submitting form: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error(f"Unexpected error processing contact form: {e}")
+        raise HTTPException(status_code=500, detail="An error occurred while processing your request. Please try again later.")
+
+# ADD this health endpoint if you don't have it
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring"""
+    return {"status": "healthy", "timestamp": datetime.datetime.utcnow()}
 
 # Fetch Unsolved Inquiries
 @app.get("/inquiries")
