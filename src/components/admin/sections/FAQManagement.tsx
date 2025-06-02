@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Edit2, Trash2, MessageSquare } from 'lucide-react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, X, Edit2, Trash2, MessageSquare } from "lucide-react";
+import axios from "axios";
 
 interface FAQ {
   _id?: string;
@@ -15,18 +15,20 @@ const FAQManagement = () => {
   const [isAddingFAQ, setIsAddingFAQ] = useState(false);
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
   const [newFAQ, setNewFAQ] = useState<FAQ>({
-    question: '',
-    answer: '',
-    category: '',
+    question: "",
+    answer: "",
+    category: "",
   });
 
   // Fetch FAQs from backend
   const fetchFAQs = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/faqs');
+      const response = await axios.get(
+        "https://es-decorations.onrender.com/faqs"
+      );
       setFaqs(response.data);
     } catch (error) {
-      console.error('Error fetching FAQs:', error);
+      console.error("Error fetching FAQs:", error);
     }
   };
 
@@ -39,18 +41,21 @@ const FAQManagement = () => {
     try {
       if (editingFAQ?._id) {
         // Update existing FAQ
-        await axios.put(`http://127.0.0.1:8000/faqs/${editingFAQ._id}`, newFAQ);
+        await axios.put(
+          `https://es-decorations.onrender.com/faqs/${editingFAQ._id}`,
+          newFAQ
+        );
       } else {
         // Create new FAQ
-        await axios.post('http://127.0.0.1:8000/faqs', newFAQ);
+        await axios.post("https://es-decorations.onrender.com/faqs", newFAQ);
       }
 
       setIsAddingFAQ(false);
       setEditingFAQ(null);
-      setNewFAQ({ question: '', answer: '', category: '' });
+      setNewFAQ({ question: "", answer: "", category: "" });
       fetchFAQs(); // Refresh the FAQ list
     } catch (error) {
-      console.error('Error saving FAQ:', error);
+      console.error("Error saving FAQ:", error);
     }
   };
 
@@ -61,12 +66,12 @@ const FAQManagement = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this FAQ?')) {
+    if (window.confirm("Are you sure you want to delete this FAQ?")) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/faqs/${id}`);
+        await axios.delete(`https://es-decorations.onrender.com/faqs/${id}`);
         fetchFAQs(); // Refresh the FAQ list
       } catch (error) {
-        console.error('Error deleting FAQ:', error);
+        console.error("Error deleting FAQ:", error);
       }
     }
   };
@@ -81,7 +86,9 @@ const FAQManagement = () => {
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-3xl font-bold">FAQ Management</h2>
-            <p className="text-neutral-400 mt-2">Manage frequently asked questions and their answers</p>
+            <p className="text-neutral-400 mt-2">
+              Manage frequently asked questions and their answers
+            </p>
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -108,7 +115,9 @@ const FAQManagement = () => {
                     <MessageSquare className="h-5 w-5 text-neutral-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">{faq.question}</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {faq.question}
+                    </h3>
                     <p className="text-neutral-400">{faq.answer}</p>
                     <span className="inline-block mt-3 px-3 py-1 bg-neutral-800 text-neutral-300 rounded-full text-sm">
                       {faq.category}
@@ -160,7 +169,7 @@ const FAQManagement = () => {
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-2xl font-bold">
-                    {editingFAQ ? 'Edit FAQ' : 'Add New FAQ'}
+                    {editingFAQ ? "Edit FAQ" : "Add New FAQ"}
                   </h3>
                   <button
                     onClick={() => {
@@ -181,7 +190,9 @@ const FAQManagement = () => {
                     <input
                       type="text"
                       value={newFAQ.question}
-                      onChange={(e) => setNewFAQ({ ...newFAQ, question: e.target.value })}
+                      onChange={(e) =>
+                        setNewFAQ({ ...newFAQ, question: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
                       required
                     />
@@ -193,7 +204,9 @@ const FAQManagement = () => {
                     </label>
                     <textarea
                       value={newFAQ.answer}
-                      onChange={(e) => setNewFAQ({ ...newFAQ, answer: e.target.value })}
+                      onChange={(e) =>
+                        setNewFAQ({ ...newFAQ, answer: e.target.value })
+                      }
                       rows={4}
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white resize-none"
                       required
@@ -207,7 +220,9 @@ const FAQManagement = () => {
                     <input
                       type="text"
                       value={newFAQ.category}
-                      onChange={(e) => setNewFAQ({ ...newFAQ, category: e.target.value })}
+                      onChange={(e) =>
+                        setNewFAQ({ ...newFAQ, category: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
                       required
                     />
@@ -230,7 +245,7 @@ const FAQManagement = () => {
                       type="submit"
                       className="px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
                     >
-                      {editingFAQ ? 'Update FAQ' : 'Add FAQ'}
+                      {editingFAQ ? "Update FAQ" : "Add FAQ"}
                     </motion.button>
                   </div>
                 </form>

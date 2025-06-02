@@ -507,7 +507,9 @@ const GalleryManagement = () => {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/gallery-events");
+      const response = await axios.get(
+        "https://es-decorations.onrender.com/gallery-events"
+      );
       setEvents(response.data);
       setError(null);
     } catch (err) {
@@ -528,7 +530,7 @@ const GalleryManagement = () => {
       formData.append("file", file);
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/upload-image",
+        "https://es-decorations.onrender.com/upload-image",
         formData,
         {
           headers: {
@@ -567,7 +569,7 @@ const GalleryManagement = () => {
       formData.append("file", file);
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/upload-image",
+        "https://es-decorations.onrender.com/upload-image",
         formData,
         {
           headers: {
@@ -598,7 +600,7 @@ const GalleryManagement = () => {
         formData.append("file", file);
 
         const response = await axios.post(
-          "http://127.0.0.1:8000/upload-image",
+          "https://es-decorations.onrender.com/upload-image",
           formData,
           {
             headers: {
@@ -631,11 +633,14 @@ const GalleryManagement = () => {
     try {
       if (editingEvent) {
         await axios.put(
-          `http://127.0.0.1:8000/gallery-events/${editingEvent._id}`,
+          `https://es-decorations.onrender.com/gallery-events/${editingEvent._id}`,
           newEvent
         );
       } else {
-        await axios.post("http://127.0.0.1:8000/gallery-events", newEvent);
+        await axios.post(
+          "https://es-decorations.onrender.com/gallery-events",
+          newEvent
+        );
       }
 
       await fetchEvents();
@@ -679,7 +684,9 @@ const GalleryManagement = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/gallery-events/${id}`);
+        await axios.delete(
+          `https://es-decorations.onrender.com/gallery-events/${id}`
+        );
         await fetchEvents();
       } catch (error) {
         console.error("Error deleting event:", error);

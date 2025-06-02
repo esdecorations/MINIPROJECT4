@@ -107,7 +107,7 @@ const AdminLogin = () => {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/admin/login",
+        "https://es-decorations.onrender.com/admin/login",
         new URLSearchParams({
           username: formData.email,
           password: formData.password,

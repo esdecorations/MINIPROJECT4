@@ -263,10 +263,15 @@ TIME_WINDOW = 3600
 # FastAPI Instance
 app = FastAPI()
 
-# CORS Middleware
+# CORS Middleware - Updated for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend URL
+    allow_origins=[
+        "http://localhost:5173",  # Local development
+        "https://es-decorations.vercel.app",  # Production frontend URL
+        "https://esdecorations.in",  # Custom domain if you have one
+        "https://www.esdecorations.in"  # www version
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

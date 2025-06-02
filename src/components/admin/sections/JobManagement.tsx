@@ -69,11 +69,13 @@ const JobManagement = () => {
     try {
       if (activeTab === "applications") {
         const response = await axios.get(
-          "http://127.0.0.1:8000/job-applications"
+          "https://es-decorations.onrender.com/job-applications"
         );
         setApplications(response.data);
       } else {
-        const response = await axios.get("http://127.0.0.1:8000/job-listings");
+        const response = await axios.get(
+          "https://es-decorations.onrender.com/job-listings"
+        );
         setJobListings(response.data);
       }
       setError(null);
@@ -91,7 +93,7 @@ const JobManagement = () => {
   ) => {
     try {
       await axios.patch(
-        `http://127.0.0.1:8000/job-applications/${applicationId}/status?status=${newStatus}`
+        `https://es-decorations.onrender.com/job-applications/${applicationId}/status?status=${newStatus}`
       );
       fetchData();
     } catch (error) {
@@ -104,11 +106,14 @@ const JobManagement = () => {
     try {
       if (editingJob?._id) {
         await axios.put(
-          `http://127.0.0.1:8000/job-listings/${editingJob._id}`,
+          `https://es-decorations.onrender.com/job-listings/${editingJob._id}`,
           newJob
         );
       } else {
-        await axios.post("http://127.0.0.1:8000/job-listings", newJob);
+        await axios.post(
+          "https://es-decorations.onrender.com/job-listings",
+          newJob
+        );
       }
       setIsAddingJob(false);
       setEditingJob(null);
@@ -130,7 +135,9 @@ const JobManagement = () => {
   const handleDeleteJob = async (jobId: string) => {
     if (window.confirm("Are you sure you want to delete this job listing?")) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/job-listings/${jobId}`);
+        await axios.delete(
+          `https://es-decorations.onrender.com/job-listings/${jobId}`
+        );
         fetchData();
       } catch (error) {
         console.error("Error deleting job listing:", error);

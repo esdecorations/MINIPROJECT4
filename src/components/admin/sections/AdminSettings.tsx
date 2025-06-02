@@ -1,20 +1,20 @@
-import React, { useState } from 'react'; 
-import { motion } from 'framer-motion';
-import { User, Lock, Mail } from 'lucide-react';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { User, Lock, Mail } from "lucide-react";
 
 const AdminSettings = () => {
   const [formData, setFormData] = useState({
-    name: 'Admin User',
-    email: 'admin@example.com',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    name: "Admin User",
+    email: "admin@example.com",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const [newAdmin, setNewAdmin] = useState({
-    name: '',
-    email: '',
-    password: '',
+    name: "",
+    email: "",
+    password: "",
   });
 
   const handleUpdateAdmin = async (e: React.FormEvent) => {
@@ -26,7 +26,10 @@ const AdminSettings = () => {
       email: formData.email,
     };
 
-    if (formData.newPassword && formData.newPassword === formData.confirmPassword) {
+    if (
+      formData.newPassword &&
+      formData.newPassword === formData.confirmPassword
+    ) {
       updateData.new_password = formData.newPassword;
     } else if (formData.newPassword) {
       alert("New password and confirm password do not match.");
@@ -34,13 +37,16 @@ const AdminSettings = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/admin/update/${adminId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      });
+      const response = await fetch(
+        `https://es-decorations.onrender.com/admin/update/${adminId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
+        }
+      );
 
       const result = await response.json();
       if (response.ok) {
@@ -62,18 +68,21 @@ const AdminSettings = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/admin/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newAdmin),
-      });
+      const response = await fetch(
+        "https://es-decorations.onrender.com/admin/add",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newAdmin),
+        }
+      );
 
       const result = await response.json();
       if (response.ok) {
         alert("New admin added successfully!");
-        setNewAdmin({ name: '', email: '', password: '' }); // Reset form
+        setNewAdmin({ name: "", email: "", password: "" }); // Reset form
       } else {
         alert(result.detail || "Failed to add new admin.");
       }
@@ -91,7 +100,9 @@ const AdminSettings = () => {
       >
         <div className="lg:hidden">
           <h2 className="text-3xl font-bold">Account Settings</h2>
-          <p className="text-neutral-400 mt-2">Manage your account preferences and security</p>
+          <p className="text-neutral-400 mt-2">
+            Manage your account preferences and security
+          </p>
         </div>
 
         <div className="bg-neutral-900 rounded-xl p-6 space-y-6">
@@ -118,7 +129,9 @@ const AdminSettings = () => {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     className="block w-full pl-10 pr-3 py-2 border border-neutral-700 rounded-lg bg-neutral-800 text-white"
                   />
                 </div>
@@ -132,7 +145,9 @@ const AdminSettings = () => {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     className="block w-full pl-10 pr-3 py-2 border border-neutral-700 rounded-lg bg-neutral-800 text-white"
                   />
                 </div>
@@ -148,7 +163,9 @@ const AdminSettings = () => {
                   <input
                     type="password"
                     value={formData.newPassword}
-                    onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, newPassword: e.target.value })
+                    }
                     className="block w-full py-2 border border-neutral-700 rounded-lg bg-neutral-800 text-white"
                   />
                 </div>
@@ -159,7 +176,12 @@ const AdminSettings = () => {
                   <input
                     type="password"
                     value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
                     className="block w-full py-2 border border-neutral-700 rounded-lg bg-neutral-800 text-white"
                   />
                 </div>
@@ -185,21 +207,27 @@ const AdminSettings = () => {
                 type="text"
                 placeholder="Admin Name"
                 value={newAdmin.name}
-                onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
+                onChange={(e) =>
+                  setNewAdmin({ ...newAdmin, name: e.target.value })
+                }
                 className="block w-full py-2 border border-neutral-700 rounded-lg bg-neutral-800 text-white"
               />
               <input
                 type="email"
                 placeholder="Admin Email"
                 value={newAdmin.email}
-                onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                onChange={(e) =>
+                  setNewAdmin({ ...newAdmin, email: e.target.value })
+                }
                 className="block w-full py-2 border border-neutral-700 rounded-lg bg-neutral-800 text-white"
               />
               <input
                 type="password"
                 placeholder="Password"
                 value={newAdmin.password}
-                onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                onChange={(e) =>
+                  setNewAdmin({ ...newAdmin, password: e.target.value })
+                }
                 className="block w-full py-2 border border-neutral-700 rounded-lg bg-neutral-800 text-white"
               />
             </div>

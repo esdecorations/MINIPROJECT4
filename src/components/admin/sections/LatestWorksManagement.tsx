@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Edit2, Trash2, Upload } from 'lucide-react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, X, Edit2, Trash2, Upload } from "lucide-react";
+import axios from "axios";
 
 interface LatestWork {
   _id?: string;
@@ -14,28 +14,30 @@ const LatestWorksManagement = () => {
   const [works, setWorks] = useState<LatestWork[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<LatestWork | null>(null);
-  const [newWork, setNewWork] = useState<Omit<LatestWork, '_id'>>({
-    title: '',
-    thumbnail: '',
-    category: '',
+  const [newWork, setNewWork] = useState<Omit<LatestWork, "_id">>({
+    title: "",
+    thumbnail: "",
+    category: "",
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchWorks = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/latest-works');
+      const response = await axios.get(
+        "https://es-decorations.onrender.com/latest-works"
+      );
       const transformedWorks = response.data.map((work: LatestWork) => ({
         ...work,
-        thumbnail: work.thumbnail.startsWith('data:') 
-          ? work.thumbnail 
-          : `data:image/jpeg;base64,${work.thumbnail}`
+        thumbnail: work.thumbnail.startsWith("data:")
+          ? work.thumbnail
+          : `data:image/jpeg;base64,${work.thumbnail}`,
       }));
       setWorks(transformedWorks);
       setError(null);
     } catch (err) {
-      console.error('Error fetching works:', err);
-      setError('Failed to load works');
+      console.error("Error fetching works:", err);
+      setError("Failed to load works");
     }
   };
 
@@ -47,21 +49,25 @@ const LatestWorksManagement = () => {
     try {
       setUploadingImage(true);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const response = await axios.post('http://127.0.0.1:8000/upload-image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.post(
+        "https://es-decorations.onrender.com/upload-image",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      setNewWork(prev => ({
+      setNewWork((prev) => ({
         ...prev,
-        thumbnail: `data:image/jpeg;base64,${response.data.image}`
+        thumbnail: `data:image/jpeg;base64,${response.data.image}`,
       }));
     } catch (error) {
-      console.error('Error uploading image:', error);
-      setError('Failed to upload image');
+      console.error("Error uploading image:", error);
+      setError("Failed to upload image");
     } finally {
       setUploadingImage(false);
     }
@@ -70,35 +76,41 @@ const LatestWorksManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     if (!newWork.title || !newWork.category || !newWork.thumbnail) {
-      setError('Please fill in all fields and upload an image');
+      setError("Please fill in all fields and upload an image");
       return;
     }
 
     try {
       const workData = {
         ...newWork,
-        thumbnail: newWork.thumbnail.split('base64,')[1]
+        thumbnail: newWork.thumbnail.split("base64,")[1],
       };
 
       if (editingWork?._id) {
-        await axios.put(`http://127.0.0.1:8000/latest-works/${editingWork._id}`, workData);
+        await axios.put(
+          `https://es-decorations.onrender.com/latest-works/${editingWork._id}`,
+          workData
+        );
       } else {
-        await axios.post('http://127.0.0.1:8000/latest-works', workData);
+        await axios.post(
+          "https://es-decorations.onrender.com/latest-works",
+          workData
+        );
       }
-      
+
       setIsModalOpen(false);
       setEditingWork(null);
       setNewWork({
-        title: '',
-        thumbnail: '',
-        category: '',
+        title: "",
+        thumbnail: "",
+        category: "",
       });
       await fetchWorks();
     } catch (error: any) {
-      console.error('Error saving work:', error);
-      setError(error.response?.data?.detail || 'Failed to save work');
+      console.error("Error saving work:", error);
+      setError(error.response?.data?.detail || "Failed to save work");
     }
   };
 
@@ -114,27 +126,33 @@ const LatestWorksManagement = () => {
 
   const handleDelete = async (id: string) => {
     if (!id) {
-      setError('Invalid work ID');
+      setError("Invalid work ID");
       return;
     }
 
-    if (window.confirm('Are you sure you want to delete this work? This action cannot be undone.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this work? This action cannot be undone."
+      )
+    ) {
       try {
-        await axios.delete(`http://127.0.0.1:8000/latest-works/${id}`);
+        await axios.delete(
+          `https://es-decorations.onrender.com/latest-works/${id}`
+        );
         await fetchWorks();
         setError(null);
       } catch (error: any) {
-        console.error('Error deleting work:', error);
-        setError(error.response?.data?.detail || 'Failed to delete work');
+        console.error("Error deleting work:", error);
+        setError(error.response?.data?.detail || "Failed to delete work");
       }
     }
   };
 
   const resetForm = () => {
     setNewWork({
-      title: '',
-      thumbnail: '',
-      category: '',
+      title: "",
+      thumbnail: "",
+      category: "",
     });
     setEditingWork(null);
     setIsModalOpen(false);
@@ -150,7 +168,9 @@ const LatestWorksManagement = () => {
       >
         <div>
           <h2 className="text-3xl font-bold">Latest Works Management</h2>
-          <p className="text-neutral-400 mt-2">Manage and update your portfolio of works</p>
+          <p className="text-neutral-400 mt-2">
+            Manage and update your portfolio of works
+          </p>
         </div>
 
         {error && (
@@ -175,7 +195,9 @@ const LatestWorksManagement = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="absolute bottom-4 left-4 right-4">
-                    <h4 className="text-lg font-medium text-white truncate">{work.title}</h4>
+                    <h4 className="text-lg font-medium text-white truncate">
+                      {work.title}
+                    </h4>
                     <p className="text-sm text-neutral-300">{work.category}</p>
                   </div>
                 </div>
@@ -232,7 +254,7 @@ const LatestWorksManagement = () => {
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-2xl font-bold">
-                    {editingWork ? 'Edit Work' : 'Add New Work'}
+                    {editingWork ? "Edit Work" : "Add New Work"}
                   </h3>
                   <button
                     onClick={() => resetForm()}
@@ -250,7 +272,9 @@ const LatestWorksManagement = () => {
                     <input
                       type="text"
                       value={newWork.title}
-                      onChange={(e) => setNewWork({ ...newWork, title: e.target.value })}
+                      onChange={(e) =>
+                        setNewWork({ ...newWork, title: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
                       required
                     />
@@ -263,7 +287,9 @@ const LatestWorksManagement = () => {
                     <input
                       type="text"
                       value={newWork.category}
-                      onChange={(e) => setNewWork({ ...newWork, category: e.target.value })}
+                      onChange={(e) =>
+                        setNewWork({ ...newWork, category: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
                       required
                     />
@@ -320,7 +346,11 @@ const LatestWorksManagement = () => {
                       disabled={uploadingImage}
                       className="px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
-                      {uploadingImage ? 'Uploading...' : editingWork ? 'Update Work' : 'Add Work'}
+                      {uploadingImage
+                        ? "Uploading..."
+                        : editingWork
+                        ? "Update Work"
+                        : "Add Work"}
                     </motion.button>
                   </div>
                 </form>
