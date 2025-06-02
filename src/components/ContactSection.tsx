@@ -22,16 +22,21 @@ const ContactSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
 
-  // IMPORTANT: Replace with your actual site key from Google reCAPTCHA console
-  const RECAPTCHA_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"; // Replace with your actual site key
+  // Get reCAPTCHA site key from environment variables
+  const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   // Enhanced Load reCAPTCHA script with debug logging
   useEffect(() => {
-    console.log("reCAPTCHA Site Key:", RECAPTCHA_SITE_KEY);
+    console.log("reCAPTCHA Site Key loaded from env");
     console.log("Current domain:", window.location.hostname);
-    
-    const style = document.createElement('style');
-    style.innerHTML = '.grecaptcha-badge { display: none !important; }';
+
+    if (!RECAPTCHA_SITE_KEY) {
+      console.error("reCAPTCHA site key not found in environment variables");
+      return;
+    }
+
+    const style = document.createElement("style");
+    style.innerHTML = ".grecaptcha-badge { display: none !important; }";
     document.head.appendChild(style);
 
     const loadRecaptcha = () => {
@@ -56,7 +61,7 @@ const ContactSection = () => {
     };
 
     loadRecaptcha();
-  }, []);
+  }, [RECAPTCHA_SITE_KEY]);
 
   // Handle form input changes
   const handleChange = (
@@ -70,12 +75,11 @@ const ContactSection = () => {
   const getReCaptchaToken = (): Promise<string> => {
     return new Promise((resolve, reject) => {
       console.log("=== reCAPTCHA Debug Info ===");
-      console.log("Site Key:", RECAPTCHA_SITE_KEY);
       console.log("recaptchaLoaded:", recaptchaLoaded);
       console.log("window.grecaptcha exists:", !!window.grecaptcha);
       console.log("Current domain:", window.location.hostname);
-      
-      if (!window.grecaptcha || !recaptchaLoaded) {
+
+      if (!window.grecaptcha || !recaptchaLoaded || !RECAPTCHA_SITE_KEY) {
         console.error("reCAPTCHA not ready");
         reject(new Error("reCAPTCHA not loaded"));
         return;
@@ -85,11 +89,14 @@ const ContactSection = () => {
       window.grecaptcha.ready(() => {
         console.log("grecaptcha.ready() callback executed");
         console.log("Executing reCAPTCHA with action: contact_form");
-        
+
         window.grecaptcha
           .execute(RECAPTCHA_SITE_KEY, { action: "contact_form" })
           .then((token: string) => {
-            console.log("✅ reCAPTCHA token received:", token ? token.substring(0, 20) + "..." : "null/empty");
+            console.log(
+              "✅ reCAPTCHA token received:",
+              token ? token.substring(0, 20) + "..." : "null/empty"
+            );
             if (token) {
               resolve(token);
             } else {
@@ -113,9 +120,13 @@ const ContactSection = () => {
 
     try {
       console.log("=== Form Submission Started ===");
-      
+
       // Basic form validation
-      if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+      if (
+        !formData.name.trim() ||
+        !formData.email.trim() ||
+        !formData.message.trim()
+      ) {
         setStatusMessage("Please fill in all required fields");
         setIsSubmitting(false);
         return;
@@ -146,14 +157,16 @@ const ContactSection = () => {
         recaptcha_token: recaptchaToken,
       };
 
-      console.log("Submitting form data:", { 
-        ...submissionData, 
-        recaptcha_token: recaptchaToken ? "***TOKEN_PRESENT***" : "***NO_TOKEN***" 
+      console.log("Submitting form data:", {
+        ...submissionData,
+        recaptcha_token: recaptchaToken
+          ? "***TOKEN_PRESENT***"
+          : "***NO_TOKEN***",
       });
 
       // Submit to your backend
       const response = await axios.post(
-        "http://127.0.0.1:8000/submit", // Update this to your production URL when deploying
+        "https://es-decorations.onrender.com/submit",
         submissionData,
         {
           headers: {
@@ -166,7 +179,9 @@ const ContactSection = () => {
       console.log("✅ Backend response:", response.status, response.data);
 
       if (response.status === 200) {
-        setStatusMessage("✅ Message sent successfully! We'll get back to you soon.");
+        setStatusMessage(
+          "✅ Message sent successfully! We'll get back to you soon."
+        );
         // Clear form
         setFormData({
           name: "",
@@ -181,11 +196,13 @@ const ContactSection = () => {
       console.error("❌ Form submission error:", error);
       console.error("Error response:", error.response);
       console.error("Error response data:", error.response?.data);
-      
+
       if (error.response?.status === 429) {
         setStatusMessage("❌ Too many requests. Please try again later.");
       } else if (error.response?.status === 400) {
-        const errorDetail = error.response?.data?.detail || "Invalid form data. Please check your inputs.";
+        const errorDetail =
+          error.response?.data?.detail ||
+          "Invalid form data. Please check your inputs.";
         console.error("Backend validation error:", errorDetail);
         setStatusMessage(`❌ ${errorDetail}`);
       } else if (error.code === "ECONNABORTED") {
@@ -357,18 +374,17 @@ const ContactSection = () => {
             <div className="flex items-center space-x-2 text-sm text-neutral-400">
               <Shield className="w-4 h-4" />
               <span>
-                {recaptchaLoaded 
-                  ? "Protected by reCAPTCHA" 
-                  : "Loading security verification..."
-                }
+                {recaptchaLoaded
+                  ? "Protected by reCAPTCHA"
+                  : "Loading security verification..."}
               </span>
             </div>
 
             {statusMessage && (
-              <div 
+              <div
                 className={`text-center text-sm font-medium mt-4 p-3 rounded-lg ${
-                  statusMessage.includes("✅") 
-                    ? "text-green-400 bg-green-900/20 border border-green-800" 
+                  statusMessage.includes("✅")
+                    ? "text-green-400 bg-green-900/20 border border-green-800"
                     : "text-red-400 bg-red-900/20 border border-red-800"
                 }`}
               >
@@ -396,18 +412,18 @@ const ContactSection = () => {
             {/* reCAPTCHA Terms */}
             <p className="text-xs text-neutral-500 text-center">
               This site is protected by reCAPTCHA and the Google{" "}
-              <a 
-                href="https://policies.google.com/privacy" 
-                target="_blank" 
+              <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:underline"
               >
                 Privacy Policy
               </a>{" "}
               and{" "}
-              <a 
-                href="https://policies.google.com/terms" 
-                target="_blank" 
+              <a
+                href="https://policies.google.com/terms"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:underline"
               >
