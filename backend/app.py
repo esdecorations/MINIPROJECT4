@@ -524,6 +524,123 @@ async def send_acceptance_email(applicant_name: str, applicant_email: str):
         print(f"❌ Error sending acceptance email: {str(e)}")
         raise Exception(f"Failed to send acceptance email: {str(e)}")
 
+async def send_rejection_email(applicant_name: str, applicant_email: str):
+    """Send job rejection email using Resend API"""
+    try:
+        # Create the email content
+        subject = "Thank you for your interest in E&S Decorations"
+        
+        # HTML version of the email
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Thank you for your interest in E&S Decorations</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">Thank you for your interest in E&S Decorations</h1>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <p style="font-size: 18px; margin-bottom: 20px;">Dear <strong>{applicant_name}</strong>,</p>
+                
+                <p style="margin-bottom: 20px;">
+                    Thank you for taking the time to apply for a position at E&S Decorations. 
+                    We appreciate your interest in joining our team and the effort you put into your application.
+                </p>
+                
+                <p style="margin-bottom: 20px;">
+                    After careful consideration of all applications, we have decided to 
+                    <strong style="color: #e74c3c;">move forward with other candidates</strong> 
+                    whose qualifications more closely match our current needs.
+                </p>
+                
+                <div style="background: #fef9e7; padding: 20px; border-left: 4px solid #f39c12; margin: 20px 0;">
+                    <p style="margin: 0; font-weight: bold; color: #f39c12;">We Encourage You To:</p>
+                    <ul style="margin: 10px 0 0 20px;">
+                        <li>Keep an eye on our future job openings</li>
+                        <li>Continue developing your skills and experience</li>
+                        <li>Apply again when suitable positions become available</li>
+                    </ul>
+                </div>
+                
+                <p style="margin-bottom: 20px;">
+                    We were impressed by your background and encourage you to apply for future opportunities 
+                    that may be a better fit. We will keep your application on file and may reach out 
+                    if a suitable position becomes available.
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <div style="background: #667eea; color: white; padding: 15px 30px; border-radius: 25px; display: inline-block;">
+                        <strong>🌟 Best of Luck in Your Job Search! 🌟</strong>
+                    </div>
+                </div>
+                
+                <p style="margin-bottom: 5px;"><strong>Best regards,</strong></p>
+                <p style="margin-top: 0; color: #667eea; font-weight: bold;">E&S Decorations Recruiting Team</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">
+                <p>© 2025 E&S Decorations. All rights reserved.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Plain text version of the email
+        plain_text = f"""
+        Dear {applicant_name},
+
+        Thank you for taking the time to apply for a position at E&S Decorations. We appreciate your interest in joining our team and the effort you put into your application.
+
+        After careful consideration of all applications, we have decided to move forward with other candidates whose qualifications more closely match our current needs.
+
+        We Encourage You To:
+        • Keep an eye on our future job openings
+        • Continue developing your skills and experience
+        • Apply again when suitable positions become available
+
+        We were impressed by your background and encourage you to apply for future opportunities that may be a better fit. We will keep your application on file and may reach out if a suitable position becomes available.
+
+        🌟 Best of Luck in Your Job Search! 🌟
+
+        Best regards,
+        E&S Decorations Recruiting Team
+
+        © 2025 E&S Decorations. All rights reserved.
+        """
+
+        # Send email using Resend
+        params: resend.Emails.SendParams = {
+            "from": EMAIL_FROM,
+            "to": [applicant_email],
+            "subject": subject,
+            "html": html_content,
+            "text": plain_text,
+            "reply_to": "esdecorationsind@gmail.com"
+        }
+
+        email_response = resend.Emails.send(params)
+        
+        # Handle different response formats
+        email_id = None
+        if hasattr(email_response, 'id'):
+            email_id = email_response.id
+        elif isinstance(email_response, dict) and 'id' in email_response:
+            email_id = email_response['id']
+        else:
+            email_id = "unknown"
+            
+        print(f"✅ Rejection email sent successfully to {applicant_email}. Email ID: {email_id}")
+        return email_response
+
+    except Exception as e:
+        print(f"❌ Error sending rejection email: {str(e)}")
+        raise Exception(f"Failed to send rejection email: {str(e)}")
+
 # Models
 class EmailSchema(BaseModel):
     message: str
@@ -1163,9 +1280,14 @@ async def update_application_status(application_id: str, status: str):
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Application not found")
 
-        # If the application is approved, send the acceptance email
+        # Send appropriate email based on status
         if status == "approved":
             await send_acceptance_email(
+                applicant_name=application["name"],
+                applicant_email=application["email"]
+            )
+        elif status == "rejected":
+            await send_rejection_email(
                 applicant_name=application["name"],
                 applicant_email=application["email"]
             )

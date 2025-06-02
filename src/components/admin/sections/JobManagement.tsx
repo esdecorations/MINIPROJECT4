@@ -1,7 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChefHat, Camera, Users, X, Check, Trash2, Plus, Edit2, FileText, Eye } from 'lucide-react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChefHat,
+  Camera,
+  Users,
+  X,
+  Check,
+  Trash2,
+  Plus,
+  Edit2,
+  FileText,
+  Eye,
+} from "lucide-react";
+import axios from "axios";
 
 interface JobApplication {
   _id: string;
@@ -12,7 +23,7 @@ interface JobApplication {
   experience: string;
   address?: string;
   resume?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   appliedDate: string;
 }
 
@@ -28,22 +39,25 @@ interface JobListing {
 }
 
 const JobManagement = () => {
-  const [activeTab, setActiveTab] = useState<'applications' | 'listings'>('applications');
+  const [activeTab, setActiveTab] = useState<"applications" | "listings">(
+    "applications"
+  );
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [jobListings, setJobListings] = useState<JobListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddingJob, setIsAddingJob] = useState(false);
   const [editingJob, setEditingJob] = useState<JobListing | null>(null);
-  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
+  const [selectedApplication, setSelectedApplication] =
+    useState<JobApplication | null>(null);
   const [newJob, setNewJob] = useState<JobListing>({
-    id: '',
-    title: '',
-    description: '',
-    requirements: [''],
-    type: 'Full-time',
-    icon: 'Users',
-    isActive: true
+    id: "",
+    title: "",
+    description: "",
+    requirements: [""],
+    type: "Full-time",
+    icon: "Users",
+    isActive: true,
   });
 
   useEffect(() => {
@@ -53,28 +67,35 @@ const JobManagement = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      if (activeTab === 'applications') {
-        const response = await axios.get('http://127.0.0.1:8000/job-applications');
+      if (activeTab === "applications") {
+        const response = await axios.get(
+          "http://127.0.0.1:8000/job-applications"
+        );
         setApplications(response.data);
       } else {
-        const response = await axios.get('http://127.0.0.1:8000/job-listings');
+        const response = await axios.get("http://127.0.0.1:8000/job-listings");
         setJobListings(response.data);
       }
       setError(null);
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error("Error fetching data:", err);
       setError(`Failed to load ${activeTab}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (applicationId: string, newStatus: 'approved' | 'rejected') => {
+  const handleStatusChange = async (
+    applicationId: string,
+    newStatus: "approved" | "rejected"
+  ) => {
     try {
-      await axios.patch(`http://127.0.0.1:8000/job-applications/${applicationId}/status?status=${newStatus}`);
+      await axios.patch(
+        `http://127.0.0.1:8000/job-applications/${applicationId}/status?status=${newStatus}`
+      );
       fetchData();
     } catch (error) {
-      console.error('Error updating application status:', error);
+      console.error("Error updating application status:", error);
     }
   };
 
@@ -82,66 +103,71 @@ const JobManagement = () => {
     e.preventDefault();
     try {
       if (editingJob?._id) {
-        await axios.put(`http://127.0.0.1:8000/job-listings/${editingJob._id}`, newJob);
+        await axios.put(
+          `http://127.0.0.1:8000/job-listings/${editingJob._id}`,
+          newJob
+        );
       } else {
-        await axios.post('http://127.0.0.1:8000/job-listings', newJob);
+        await axios.post("http://127.0.0.1:8000/job-listings", newJob);
       }
       setIsAddingJob(false);
       setEditingJob(null);
       setNewJob({
-        id: '',
-        title: '',
-        description: '',
-        requirements: [''],
-        type: 'Full-time',
-        icon: 'Users',
-        isActive: true
+        id: "",
+        title: "",
+        description: "",
+        requirements: [""],
+        type: "Full-time",
+        icon: "Users",
+        isActive: true,
       });
       fetchData();
     } catch (error) {
-      console.error('Error saving job listing:', error);
+      console.error("Error saving job listing:", error);
     }
   };
 
   const handleDeleteJob = async (jobId: string) => {
-    if (window.confirm('Are you sure you want to delete this job listing?')) {
+    if (window.confirm("Are you sure you want to delete this job listing?")) {
       try {
         await axios.delete(`http://127.0.0.1:8000/job-listings/${jobId}`);
         fetchData();
       } catch (error) {
-        console.error('Error deleting job listing:', error);
+        console.error("Error deleting job listing:", error);
       }
     }
   };
 
   const addRequirement = () => {
-    setNewJob(prev => ({
+    setNewJob((prev) => ({
       ...prev,
-      requirements: [...prev.requirements, '']
+      requirements: [...prev.requirements, ""],
     }));
   };
 
   const updateRequirement = (index: number, value: string) => {
-    setNewJob(prev => ({
+    setNewJob((prev) => ({
       ...prev,
-      requirements: prev.requirements.map((req, i) => i === index ? value : req)
+      requirements: prev.requirements.map((req, i) =>
+        i === index ? value : req
+      ),
     }));
   };
 
   const removeRequirement = (index: number) => {
-    setNewJob(prev => ({
+    setNewJob((prev) => ({
       ...prev,
-      requirements: prev.requirements.filter((_, i) => i !== index)
+      requirements: prev.requirements.filter((_, i) => i !== index),
     }));
   };
 
   const getJobIcon = (jobId: string) => {
     switch (jobId) {
-      case 'chef':
+      case "chef":
         return ChefHat;
-      case 'cameraman':
+      case "cameraman":
         return Camera;
-      case 'catering':
+      case "catering":
         return Users;
       default:
         return Users;
@@ -150,14 +176,14 @@ const JobManagement = () => {
 
   const getJobTitle = (jobId: string) => {
     switch (jobId) {
-      case 'chef':
-        return 'Permanent Chef';
-      case 'cameraman':
-        return 'Permanent Cameraman';
-      case 'catering':
-        return 'Catering Boys (On-Demand)';
+      case "chef":
+        return "Permanent Chef";
+      case "cameraman":
+        return "Permanent Cameraman";
+      case "catering":
+        return "Catering Boys (On-Demand)";
       default:
-        return 'Unknown Position';
+        return "Unknown Position";
     }
   };
 
@@ -170,13 +196,13 @@ const JobManagement = () => {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
       const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      const blob = new Blob([byteArray], { type: "application/pdf" });
 
       // Create a URL for the Blob
       const fileURL = URL.createObjectURL(blob);
 
       // Open in a new tab
-      window.open(fileURL, '_blank');
+      window.open(fileURL, "_blank");
 
       // Clean up the URL after a delay
       setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
@@ -192,11 +218,7 @@ const JobManagement = () => {
   }
 
   if (error) {
-    return (
-      <div className="text-center text-red-500 py-20">
-        {error}
-      </div>
-    );
+    return <div className="text-center text-red-500 py-20">{error}</div>;
   }
 
   return (
@@ -209,27 +231,27 @@ const JobManagement = () => {
         <div className="flex justify-between items-center">
           <div className="flex gap-4 border-b border-neutral-800">
             <button
-              onClick={() => setActiveTab('applications')}
+              onClick={() => setActiveTab("applications")}
               className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'applications'
-                  ? 'text-blue-500 border-b-2 border-blue-500'
-                  : 'text-neutral-400 hover:text-white'
+                activeTab === "applications"
+                  ? "text-blue-500 border-b-2 border-blue-500"
+                  : "text-neutral-400 hover:text-white"
               }`}
             >
               Applications
             </button>
             <button
-              onClick={() => setActiveTab('listings')}
+              onClick={() => setActiveTab("listings")}
               className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'listings'
-                  ? 'text-blue-500 border-b-2 border-blue-500'
-                  : 'text-neutral-400 hover:text-white'
+                activeTab === "listings"
+                  ? "text-blue-500 border-b-2 border-blue-500"
+                  : "text-neutral-400 hover:text-white"
               }`}
             >
               Job Listings
             </button>
           </div>
-          {activeTab === 'listings' && (
+          {activeTab === "listings" && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -242,7 +264,7 @@ const JobManagement = () => {
           )}
         </div>
 
-        {activeTab === 'applications' ? (
+        {activeTab === "applications" ? (
           <div className="grid gap-4">
             {applications.map((application) => {
               const Icon = getJobIcon(application.jobId);
@@ -259,17 +281,23 @@ const JobManagement = () => {
                         <Icon className="h-6 w-6 text-neutral-400" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold">{application.name}</h3>
-                        <p className="text-neutral-400">{getJobTitle(application.jobId)}</p>
+                        <h3 className="text-lg font-semibold">
+                          {application.name}
+                        </h3>
+                        <p className="text-neutral-400">
+                          {getJobTitle(application.jobId)}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {application.status === 'pending' && (
+                      {application.status === "pending" && (
                         <>
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => handleStatusChange(application._id, 'approved')}
+                            onClick={() =>
+                              handleStatusChange(application._id, "approved")
+                            }
                             className="p-2 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 transition-colors"
                           >
                             <Check className="h-5 w-5" />
@@ -277,19 +305,21 @@ const JobManagement = () => {
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => handleStatusChange(application._id, 'rejected')}
+                            onClick={() =>
+                              handleStatusChange(application._id, "rejected")
+                            }
                             className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
                           >
                             <X className="h-5 w-5" />
                           </motion.button>
                         </>
                       )}
-                      {application.status === 'approved' && (
+                      {application.status === "approved" && (
                         <span className="px-3 py-1 bg-green-500/10 text-green-500 rounded-lg text-sm">
                           Approved
                         </span>
                       )}
-                      {application.status === 'rejected' && (
+                      {application.status === "rejected" && (
                         <span className="px-3 py-1 bg-red-500/10 text-red-500 rounded-lg text-sm">
                           Rejected
                         </span>
@@ -340,12 +370,14 @@ const JobManagement = () => {
                         </ul>
                       </div>
                       <div className="mt-4">
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          job.isActive
-                            ? 'bg-green-500/10 text-green-500'
-                            : 'bg-neutral-500/10 text-neutral-500'
-                        }`}>
-                          {job.isActive ? 'Active' : 'Inactive'}
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            job.isActive
+                              ? "bg-green-500/10 text-green-500"
+                              : "bg-neutral-500/10 text-neutral-500"
+                          }`}
+                        >
+                          {job.isActive ? "Active" : "Inactive"}
                         </span>
                         <span className="ml-2 px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-sm">
                           {job.type}
@@ -416,52 +448,79 @@ const JobManagement = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium text-neutral-400">Position</h4>
-                    <p className="text-lg">{getJobTitle(selectedApplication.jobId)}</p>
+                    <h4 className="text-sm font-medium text-neutral-400">
+                      Position
+                    </h4>
+                    <p className="text-lg">
+                      {getJobTitle(selectedApplication.jobId)}
+                    </p>
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-medium text-neutral-400">Applicant Name</h4>
+                    <h4 className="text-sm font-medium text-neutral-400">
+                      Applicant Name
+                    </h4>
                     <p className="text-lg">{selectedApplication.name}</p>
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-medium text-neutral-400">Contact Information</h4>
+                    <h4 className="text-sm font-medium text-neutral-400">
+                      Contact Information
+                    </h4>
                     <p className="text-lg">{selectedApplication.email}</p>
                     <p className="text-lg">{selectedApplication.phone}</p>
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-medium text-neutral-400">Age</h4>
+                    <h4 className="text-sm font-medium text-neutral-400">
+                      Age
+                    </h4>
                     <p className="text-lg">{selectedApplication.experience}</p>
                   </div>
 
                   {selectedApplication.address && (
                     <div>
-                      <h4 className="text-sm font-medium text-neutral-400">Address</h4>
+                      <h4 className="text-sm font-medium text-neutral-400">
+                        Address
+                      </h4>
                       <p className="text-lg">{selectedApplication.address}</p>
                     </div>
                   )}
 
                   <div>
-                    <h4 className="text-sm font-medium text-neutral-400">Application Date</h4>
-                    <p className="text-lg">{new Date(selectedApplication.appliedDate).toLocaleDateString()}</p>
+                    <h4 className="text-sm font-medium text-neutral-400">
+                      Application Date
+                    </h4>
+                    <p className="text-lg">
+                      {new Date(
+                        selectedApplication.appliedDate
+                      ).toLocaleDateString()}
+                    </p>
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-medium text-neutral-400">Status</h4>
-                    <p className={`text-lg ${
-                      selectedApplication.status === 'approved' ? 'text-green-500' :
-                      selectedApplication.status === 'rejected' ? 'text-red-500' :
-                      'text-yellow-500'
-                    }`}>
-                      {selectedApplication.status.charAt(0).toUpperCase() + selectedApplication.status.slice(1)}
+                    <h4 className="text-sm font-medium text-neutral-400">
+                      Status
+                    </h4>
+                    <p
+                      className={`text-lg ${
+                        selectedApplication.status === "approved"
+                          ? "text-green-500"
+                          : selectedApplication.status === "rejected"
+                          ? "text-red-500"
+                          : "text-yellow-500"
+                      }`}
+                    >
+                      {selectedApplication.status.charAt(0).toUpperCase() +
+                        selectedApplication.status.slice(1)}
                     </p>
                   </div>
 
                   {selectedApplication.resume && (
                     <div>
-                      <h4 className="text-sm font-medium text-neutral-400 mb-2">Resume</h4>
+                      <h4 className="text-sm font-medium text-neutral-400 mb-2">
+                        Resume
+                      </h4>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -503,7 +562,7 @@ const JobManagement = () => {
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-2xl font-bold">
-                    {editingJob ? 'Edit Job Listing' : 'Add New Job Listing'}
+                    {editingJob ? "Edit Job Listing" : "Add New Job Listing"}
                   </h3>
                   <button
                     onClick={() => {
@@ -524,7 +583,9 @@ const JobManagement = () => {
                     <input
                       type="text"
                       value={newJob.id}
-                      onChange={(e) => setNewJob({ ...newJob, id: e.target.value })}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, id: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
                       placeholder="e.g., chef, cameraman, catering"
                       required
@@ -538,7 +599,9 @@ const JobManagement = () => {
                     <input
                       type="text"
                       value={newJob.title}
-                      onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, title: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
                       placeholder="e.g., Permanent Chef"
                       required
@@ -551,7 +614,9 @@ const JobManagement = () => {
                     </label>
                     <textarea
                       value={newJob.description}
-                      onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, description: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white resize-none h-24"
                       placeholder="Enter job description"
                       required
@@ -567,7 +632,9 @@ const JobManagement = () => {
                         <input
                           type="text"
                           value={req}
-                          onChange={(e) => updateRequirement(index, e.target.value)}
+                          onChange={(e) =>
+                            updateRequirement(index, e.target.value)
+                          }
                           className="flex-1 px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
                           placeholder="Enter requirement"
                           required
@@ -597,7 +664,9 @@ const JobManagement = () => {
                     </label>
                     <select
                       value={newJob.type}
-                      onChange={(e) => setNewJob({ ...newJob, type: e.target.value })}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, type: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-neutral-800 rounded-lg border border-neutral-700 focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
                       required
                     >
@@ -616,7 +685,9 @@ const JobManagement = () => {
                       <input
                         type="checkbox"
                         checked={newJob.isActive}
-                        onChange={(e) => setNewJob({ ...newJob, isActive: e.target.checked })}
+                        onChange={(e) =>
+                          setNewJob({ ...newJob, isActive: e.target.checked })
+                        }
                         className="w-4 h-4 bg-neutral-800 rounded border-neutral-700 focus:ring-2 focus:ring-blue-500"
                       />
                       <span className="text-neutral-300">Active</span>
@@ -640,7 +711,7 @@ const JobManagement = () => {
                       type="submit"
                       className="px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
                     >
-                      {editingJob ? 'Update Job' : 'Create Job'}
+                      {editingJob ? "Update Job" : "Create Job"}
                     </motion.button>
                   </div>
                 </form>
