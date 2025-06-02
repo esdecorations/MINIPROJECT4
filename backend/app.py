@@ -902,6 +902,7 @@ async def validate_ip(request: Request):
             os.getenv("ALLOWED_IP_1"),
             os.getenv("ALLOWED_IP_2"), 
             os.getenv("ALLOWED_IP_3"),
+            os.getenv("ALLOWED_IP_4"),
         ]
         allowed_ips = [ip_addr for ip_addr in allowed_ips if ip_addr]
 
