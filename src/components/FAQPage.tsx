@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-import axios from 'axios';
-import Navbar from './Navbar';
-import { BackgroundBeams } from './ui/background-beams';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+import axios from "axios";
+import Navbar from "./Navbar";
+import { BackgroundBeams } from "./ui/background-beams";
 
 interface FAQ {
   _id: string;
@@ -22,12 +22,14 @@ const FAQPage = () => {
   useEffect(() => {
     const fetchFAQs = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/faqs');
+        const response = await axios.get(
+          "https://es-decorations.onrender.com/faqs"
+        );
         setFaqs(response.data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching FAQs:', err);
-        setError('Failed to load FAQs. Please try again later.');
+        console.error("Error fetching FAQs:", err);
+        setError("Failed to load FAQs. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -36,10 +38,10 @@ const FAQPage = () => {
     fetchFAQs();
   }, []);
 
-  const categories = Array.from(new Set(faqs.map(faq => faq.category)));
-  
-  const filteredFaqs = selectedCategory 
-    ? faqs.filter(faq => faq.category === selectedCategory)
+  const categories = Array.from(new Set(faqs.map((faq) => faq.category)));
+
+  const filteredFaqs = selectedCategory
+    ? faqs.filter((faq) => faq.category === selectedCategory)
     : faqs;
 
   return (
@@ -57,7 +59,8 @@ const FAQPage = () => {
               Frequently Asked Questions
             </h1>
             <p className="text-neutral-400 max-w-2xl mx-auto">
-              Find answers to common questions about our event management services
+              Find answers to common questions about our event management
+              services
             </p>
           </motion.div>
 
@@ -66,9 +69,7 @@ const FAQPage = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           ) : error ? (
-            <div className="text-center text-red-500 py-20">
-              {error}
-            </div>
+            <div className="text-center text-red-500 py-20">{error}</div>
           ) : (
             <>
               <div className="flex flex-wrap gap-2 justify-center mb-8">
@@ -78,8 +79,8 @@ const FAQPage = () => {
                   onClick={() => setSelectedCategory(null)}
                   className={`px-4 py-2 rounded-full ${
                     selectedCategory === null
-                      ? 'bg-white text-black'
-                      : 'bg-neutral-800 text-white'
+                      ? "bg-white text-black"
+                      : "bg-neutral-800 text-white"
                   }`}
                 >
                   All
@@ -92,8 +93,8 @@ const FAQPage = () => {
                     onClick={() => setSelectedCategory(category)}
                     className={`px-4 py-2 rounded-full ${
                       selectedCategory === category
-                        ? 'bg-white text-black'
-                        : 'bg-neutral-800 text-white'
+                        ? "bg-white text-black"
+                        : "bg-neutral-800 text-white"
                     }`}
                   >
                     {category}
@@ -104,7 +105,8 @@ const FAQPage = () => {
               <div className="max-w-3xl mx-auto pb-20 space-y-4">
                 {filteredFaqs.length === 0 ? (
                   <div className="text-center text-neutral-400 py-10">
-                    No FAQs found {selectedCategory && `for category "${selectedCategory}"`}
+                    No FAQs found{" "}
+                    {selectedCategory && `for category "${selectedCategory}"`}
                   </div>
                 ) : (
                   filteredFaqs.map((faq, index) => (
@@ -116,7 +118,9 @@ const FAQPage = () => {
                       className="bg-neutral-900/50 border border-neutral-800 rounded-lg overflow-hidden"
                     >
                       <button
-                        onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                        onClick={() =>
+                          setOpenIndex(openIndex === index ? null : index)
+                        }
                         className="w-full px-6 py-4 text-left flex justify-between items-center"
                       >
                         <span className="font-medium">{faq.question}</span>

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChefHat, Camera, Users, X } from 'lucide-react';
-import axios from 'axios';
-import Navbar from './Navbar';
-import { BackgroundBeams } from './ui/background-beams';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChefHat, Camera, Users, X } from "lucide-react";
+import axios from "axios";
+import Navbar from "./Navbar";
+import { BackgroundBeams } from "./ui/background-beams";
 
 interface JobListing {
   _id: string;
@@ -36,7 +36,11 @@ interface FormErrors {
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
-const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+const ALLOWED_FILE_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 const CareersPage = () => {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
@@ -44,31 +48,35 @@ const CareersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<JobApplication>({
-    jobId: '',
-    name: '',
-    email: '',
-    phone: '',
-    experience: '',
+    jobId: "",
+    name: "",
+    email: "",
+    phone: "",
+    experience: "",
   });
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{
-    type: 'success' | 'error' | null;
+    type: "success" | "error" | null;
     message: string;
-  }>({ type: null, message: '' });
-  const [fileError, setFileError] = useState<string>('');
+  }>({ type: null, message: "" });
+  const [fileError, setFileError] = useState<string>("");
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/job-listings');
+        const response = await axios.get(
+          "https://es-decorations.onrender.com/job-listings"
+        );
         // Filter only active jobs
-        const activeJobs = response.data.filter((job: JobListing) => job.isActive);
+        const activeJobs = response.data.filter(
+          (job: JobListing) => job.isActive
+        );
         setJobs(activeJobs);
         setError(null);
       } catch (err) {
-        console.error('Error fetching jobs:', err);
-        setError('Failed to load job listings. Please try again later.');
+        console.error("Error fetching jobs:", err);
+        setError("Failed to load job listings. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -83,55 +91,59 @@ const CareersPage = () => {
 
     // Name validation
     if (!formData.name.trim()) {
-      errors.name = 'Name is required';
+      errors.name = "Name is required";
       isValid = false;
     } else if (formData.name.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters long';
+      errors.name = "Name must be at least 2 characters long";
       isValid = false;
     } else if (!/^[a-zA-Z\s]+$/.test(formData.name.trim())) {
-      errors.name = 'Name should only contain letters and spaces';
+      errors.name = "Name should only contain letters and spaces";
       isValid = false;
     }
 
     // Email validation
     if (!formData.email.trim()) {
-      errors.email = 'Email is required';
+      errors.email = "Email is required";
       isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      errors.email = 'Please enter a valid email address';
+      errors.email = "Please enter a valid email address";
       isValid = false;
     }
 
     // Phone validation
     if (!formData.phone.trim()) {
-      errors.phone = 'Phone number is required';
+      errors.phone = "Phone number is required";
       isValid = false;
     } else if (!/^[1-9][0-9]{9}$/.test(formData.phone.trim())) {
-      errors.phone = 'Please enter a valid 10-digit phone number (should not start with 0)';
+      errors.phone =
+        "Please enter a valid 10-digit phone number (should not start with 0)";
       isValid = false;
     }
 
     // Experience (Age) validation
     if (!formData.experience.trim()) {
-      errors.experience = 'Age is required';
+      errors.experience = "Age is required";
       isValid = false;
     } else {
       const age = parseInt(formData.experience);
       if (isNaN(age) || age < 18 || age > 60) {
-        errors.experience = 'Age must be between 18 and 60';
+        errors.experience = "Age must be between 18 and 60";
         isValid = false;
       }
     }
 
     // Address validation for catering position
-    if (formData.jobId === 'catering' && (!formData.address || !formData.address.trim())) {
-      errors.address = 'Address is required for catering positions';
+    if (
+      formData.jobId === "catering" &&
+      (!formData.address || !formData.address.trim())
+    ) {
+      errors.address = "Address is required for catering positions";
       isValid = false;
     }
 
     // Resume validation for non-catering positions
-    if (formData.jobId !== 'catering' && !formData.resume) {
-      errors.resume = 'Resume is required for this position';
+    if (formData.jobId !== "catering" && !formData.resume) {
+      errors.resume = "Resume is required for this position";
       isValid = false;
     }
 
@@ -141,11 +153,11 @@ const CareersPage = () => {
 
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
-      case 'ChefHat':
+      case "ChefHat":
         return ChefHat;
-      case 'Camera':
+      case "Camera":
         return Camera;
-      case 'Users':
+      case "Users":
         return Users;
       default:
         return Users;
@@ -155,7 +167,7 @@ const CareersPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitStatus({ type: null, message: '' });
+    setSubmitStatus({ type: null, message: "" });
 
     if (!validateForm()) {
       setIsSubmitting(false);
@@ -165,55 +177,59 @@ const CareersPage = () => {
     try {
       const applicationData = {
         ...formData,
-        status: 'pending',
-        appliedDate: new Date().toISOString()
+        status: "pending",
+        appliedDate: new Date().toISOString(),
       };
 
-      const response = await axios.post('http://127.0.0.1:8000/job-applications', applicationData);
+      const response = await axios.post(
+        "https://es-decorations.onrender.com/job-applications",
+        applicationData
+      );
 
       if (response.status === 200) {
         setSubmitStatus({
-          type: 'success',
-          message: 'Application submitted successfully! We will contact you soon.'
+          type: "success",
+          message:
+            "Application submitted successfully! We will contact you soon.",
         });
         setSelectedJob(null);
         setFormData({
-          jobId: '',
-          name: '',
-          email: '',
-          phone: '',
-          experience: '',
+          jobId: "",
+          name: "",
+          email: "",
+          phone: "",
+          experience: "",
         });
         setFormErrors({});
       }
     } catch (error) {
       setSubmitStatus({
-        type: 'error',
-        message: 'Failed to submit application. Please try again.'
+        type: "error",
+        message: "Failed to submit application. Please try again.",
       });
-      console.error('Error submitting application:', error);
+      console.error("Error submitting application:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFileError('');
-    setFormErrors(prev => ({ ...prev, resume: undefined }));
+    setFileError("");
+    setFormErrors((prev) => ({ ...prev, resume: undefined }));
     const file = e.target.files?.[0];
-    
+
     if (file) {
       // Check file size
       if (file.size > MAX_FILE_SIZE) {
-        setFileError('File size must be less than 5MB');
-        e.target.value = ''; // Clear the input
+        setFileError("File size must be less than 5MB");
+        e.target.value = ""; // Clear the input
         return;
       }
 
       // Check file type
       if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-        setFileError('Only PDF and Word documents are allowed');
-        e.target.value = ''; // Clear the input
+        setFileError("Only PDF and Word documents are allowed");
+        e.target.value = ""; // Clear the input
         return;
       }
 
@@ -222,8 +238,8 @@ const CareersPage = () => {
         const base64String = await convertFileToBase64(file);
         setFormData({ ...formData, resume: base64String });
       } catch (error) {
-        console.error('Error converting file:', error);
-        setFileError('Error processing file. Please try again.');
+        console.error("Error converting file:", error);
+        setFileError("Error processing file. Please try again.");
       }
     }
   };
@@ -233,12 +249,12 @@ const CareersPage = () => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        if (typeof reader.result === 'string') {
+        if (typeof reader.result === "string") {
           // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
-          const base64String = reader.result.split(',')[1];
+          const base64String = reader.result.split(",")[1];
           resolve(base64String);
         } else {
-          reject(new Error('Failed to convert file to base64'));
+          reject(new Error("Failed to convert file to base64"));
         }
       };
       reader.onerror = (error) => reject(error);
@@ -271,14 +287,13 @@ const CareersPage = () => {
               Join Our Team
             </h1>
             <p className="text-neutral-400 max-w-2xl mx-auto">
-              Be part of something extraordinary. We're looking for talented individuals to join our growing team.
+              Be part of something extraordinary. We're looking for talented
+              individuals to join our growing team.
             </p>
           </motion.div>
 
           {error ? (
-            <div className="text-center text-red-500 py-10">
-              {error}
-            </div>
+            <div className="text-center text-red-500 py-10">{error}</div>
           ) : jobs.length === 0 ? (
             <div className="text-center text-neutral-400 py-10">
               No job openings available at the moment.
@@ -299,19 +314,28 @@ const CareersPage = () => {
                       setSelectedJob(job._id);
                       setFormData({ ...formData, jobId: job.id });
                       setFormErrors({});
-                      setFileError('');
+                      setFileError("");
                     }}
                   >
                     <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl overflow-hidden hover:border-neutral-700 transition-colors">
                       <div className="p-6">
                         <IconComponent className="w-10 h-10 text-blue-500 mb-4" />
-                        <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
-                        <p className="text-neutral-400 mb-4">{job.description}</p>
+                        <h3 className="text-xl font-semibold mb-2">
+                          {job.title}
+                        </h3>
+                        <p className="text-neutral-400 mb-4">
+                          {job.description}
+                        </p>
                         <div className="mb-6">
-                          <h4 className="text-sm font-semibold text-neutral-300 mb-2">Requirements:</h4>
+                          <h4 className="text-sm font-semibold text-neutral-300 mb-2">
+                            Requirements:
+                          </h4>
                           <ul className="space-y-2">
                             {job.requirements.map((req, i) => (
-                              <li key={i} className="text-sm text-neutral-400 flex items-start">
+                              <li
+                                key={i}
+                                className="text-sm text-neutral-400 flex items-start"
+                              >
                                 <span className="text-blue-500 mr-2">•</span>
                                 {req}
                               </li>
@@ -343,7 +367,7 @@ const CareersPage = () => {
               if (e.target === e.currentTarget) {
                 setSelectedJob(null);
                 setFormErrors({});
-                setFileError('');
+                setFileError("");
               }
             }}
           >
@@ -357,25 +381,29 @@ const CareersPage = () => {
                 onClick={() => {
                   setSelectedJob(null);
                   setFormErrors({});
-                  setFileError('');
+                  setFileError("");
                 }}
                 className="absolute right-4 top-4 text-neutral-400 hover:text-white"
               >
                 <X className="w-6 h-6" />
               </button>
-              
+
               <h2 className="text-2xl font-bold mb-4">
-                Apply for {jobs.find(j => j._id === selectedJob)?.title}
+                Apply for {jobs.find((j) => j._id === selectedJob)?.title}
               </h2>
 
               {submitStatus.type && (
-                <div className={`mb-4 p-3 rounded-lg ${
-                  submitStatus.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                }`}>
+                <div
+                  className={`mb-4 p-3 rounded-lg ${
+                    submitStatus.type === "success"
+                      ? "bg-green-500/10 text-green-500"
+                      : "bg-red-500/10 text-red-500"
+                  }`}
+                >
                   {submitStatus.message}
                 </div>
               )}
-              
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-300 mb-1">
@@ -387,18 +415,20 @@ const CareersPage = () => {
                     onChange={(e) => {
                       setFormData({ ...formData, name: e.target.value });
                       if (formErrors.name) {
-                        setFormErrors(prev => ({ ...prev, name: undefined }));
+                        setFormErrors((prev) => ({ ...prev, name: undefined }));
                       }
                     }}
                     className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                      formErrors.name ? 'border-red-500' : 'border-neutral-700'
+                      formErrors.name ? "border-red-500" : "border-neutral-700"
                     }`}
                   />
                   {formErrors.name && (
-                    <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>
+                    <p className="mt-1 text-sm text-red-500">
+                      {formErrors.name}
+                    </p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-300 mb-1">
                     Email
@@ -409,18 +439,23 @@ const CareersPage = () => {
                     onChange={(e) => {
                       setFormData({ ...formData, email: e.target.value });
                       if (formErrors.email) {
-                        setFormErrors(prev => ({ ...prev, email: undefined }));
+                        setFormErrors((prev) => ({
+                          ...prev,
+                          email: undefined,
+                        }));
                       }
                     }}
                     className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                      formErrors.email ? 'border-red-500' : 'border-neutral-700'
+                      formErrors.email ? "border-red-500" : "border-neutral-700"
                     }`}
                   />
                   {formErrors.email && (
-                    <p className="mt-1 text-sm text-red-500">{formErrors.email}</p>
+                    <p className="mt-1 text-sm text-red-500">
+                      {formErrors.email}
+                    </p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-300 mb-1">
                     Phone Number
@@ -429,21 +464,28 @@ const CareersPage = () => {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
                       setFormData({ ...formData, phone: value });
                       if (formErrors.phone) {
-                        setFormErrors(prev => ({ ...prev, phone: undefined }));
+                        setFormErrors((prev) => ({
+                          ...prev,
+                          phone: undefined,
+                        }));
                       }
                     }}
                     className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                      formErrors.phone ? 'border-red-500' : 'border-neutral-700'
+                      formErrors.phone ? "border-red-500" : "border-neutral-700"
                     }`}
                   />
                   {formErrors.phone && (
-                    <p className="mt-1 text-sm text-red-500">{formErrors.phone}</p>
+                    <p className="mt-1 text-sm text-red-500">
+                      {formErrors.phone}
+                    </p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-300 mb-1">
                     Age
@@ -456,19 +498,26 @@ const CareersPage = () => {
                     onChange={(e) => {
                       setFormData({ ...formData, experience: e.target.value });
                       if (formErrors.experience) {
-                        setFormErrors(prev => ({ ...prev, experience: undefined }));
+                        setFormErrors((prev) => ({
+                          ...prev,
+                          experience: undefined,
+                        }));
                       }
                     }}
                     className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                      formErrors.experience ? 'border-red-500' : 'border-neutral-700'
+                      formErrors.experience
+                        ? "border-red-500"
+                        : "border-neutral-700"
                     }`}
                   />
                   {formErrors.experience && (
-                    <p className="mt-1 text-sm text-red-500">{formErrors.experience}</p>
+                    <p className="mt-1 text-sm text-red-500">
+                      {formErrors.experience}
+                    </p>
                   )}
                 </div>
 
-                {formData.jobId === 'catering' ? (
+                {formData.jobId === "catering" ? (
                   <div>
                     <label className="block text-sm font-medium text-neutral-300 mb-1">
                       Address
@@ -478,15 +527,22 @@ const CareersPage = () => {
                       onChange={(e) => {
                         setFormData({ ...formData, address: e.target.value });
                         if (formErrors.address) {
-                          setFormErrors(prev => ({ ...prev, address: undefined }));
+                          setFormErrors((prev) => ({
+                            ...prev,
+                            address: undefined,
+                          }));
                         }
                       }}
                       className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-24 ${
-                        formErrors.address ? 'border-red-500' : 'border-neutral-700'
+                        formErrors.address
+                          ? "border-red-500"
+                          : "border-neutral-700"
                       }`}
                     />
                     {formErrors.address && (
-                      <p className="mt-1 text-sm text-red-500">{formErrors.address}</p>
+                      <p className="mt-1 text-sm text-red-500">
+                        {formErrors.address}
+                      </p>
                     )}
                   </div>
                 ) : (
@@ -499,11 +555,15 @@ const CareersPage = () => {
                       accept=".pdf,.doc,.docx"
                       onChange={handleFileChange}
                       className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 ${
-                        formErrors.resume || fileError ? 'border-red-500' : 'border-neutral-700'
+                        formErrors.resume || fileError
+                          ? "border-red-500"
+                          : "border-neutral-700"
                       }`}
                     />
                     {(fileError || formErrors.resume) && (
-                      <p className="mt-1 text-sm text-red-500">{fileError || formErrors.resume}</p>
+                      <p className="mt-1 text-sm text-red-500">
+                        {fileError || formErrors.resume}
+                      </p>
                     )}
                   </div>
                 )}
@@ -515,7 +575,7 @@ const CareersPage = () => {
                   disabled={isSubmitting}
                   className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                  {isSubmitting ? "Submitting..." : "Submit Application"}
                 </motion.button>
               </form>
             </motion.div>

@@ -1,7 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Calendar, MapPin, Users, Maximize2 } from 'lucide-react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Calendar,
+  MapPin,
+  Users,
+  Maximize2,
+} from "lucide-react";
+import axios from "axios";
 
 interface GalleryEvent {
   _id: string;
@@ -28,12 +36,14 @@ const InteractiveGallery = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/gallery-events');
+        const response = await axios.get(
+          "https://es-decorations.onrender.com/gallery-events"
+        );
         setEvents(response.data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching events:', err);
-        setError('Failed to load events. Please try again later.');
+        console.error("Error fetching events:", err);
+        setError("Failed to load events. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -45,21 +55,21 @@ const InteractiveGallery = () => {
   // Handle escape key to close fullscreen
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setIsFullscreen(false);
       }
     };
 
     if (isFullscreen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
     };
   }, [isFullscreen]);
 
@@ -89,7 +99,10 @@ const InteractiveGallery = () => {
 
   const prevImage = () => {
     if (selectedEvent) {
-      setCurrentImageIndex((prev) => (prev - 1 + selectedEvent.images.length) % selectedEvent.images.length);
+      setCurrentImageIndex(
+        (prev) =>
+          (prev - 1 + selectedEvent.images.length) % selectedEvent.images.length
+      );
     }
   };
 
@@ -107,9 +120,7 @@ const InteractiveGallery = () => {
     return (
       <section className="py-10 bg-black text-white">
         <div className="container-width">
-          <div className="text-center text-red-500 py-20">
-            {error}
-          </div>
+          <div className="text-center text-red-500 py-20">{error}</div>
         </div>
       </section>
     );
@@ -128,7 +139,8 @@ const InteractiveGallery = () => {
             Our Event Gallery
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Explore our portfolio of successful events that showcase our creativity and expertise
+            Explore our portfolio of successful events that showcase our
+            creativity and expertise
           </p>
         </motion.div>
 
@@ -160,7 +172,9 @@ const InteractiveGallery = () => {
                     </div>
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-2">{event.title}</h3>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {event.title}
+                    </h3>
                     <p className="text-neutral-400 mb-4">{event.description}</p>
                     <div className="flex justify-between items-center text-sm text-neutral-500">
                       <span>{event.date}</span>
@@ -210,7 +224,9 @@ const InteractiveGallery = () => {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.5 }}
                       src={selectedEvent.images[currentImageIndex]}
-                      alt={`${selectedEvent.title} - Image ${currentImageIndex + 1}`}
+                      alt={`${selectedEvent.title} - Image ${
+                        currentImageIndex + 1
+                      }`}
                       className="w-full h-full object-cover cursor-pointer"
                       onClick={openFullscreen}
                     />
@@ -260,18 +276,27 @@ const InteractiveGallery = () => {
                 <div className="p-8">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                     <div className="md:w-2/3">
-                      <h2 className="text-3xl font-bold mb-4">{selectedEvent.title}</h2>
-                      <p className="text-neutral-300 mb-6">{selectedEvent.details}</p>
-                      {selectedEvent.highlights && selectedEvent.highlights.length > 0 && (
-                        <div className="mt-4">
-                          <h4 className="text-lg font-semibold mb-2">Event Highlights</h4>
-                          <ul className="list-disc list-inside text-neutral-400">
-                            {selectedEvent.highlights.map((highlight, index) => (
-                              <li key={index}>{highlight}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      <h2 className="text-3xl font-bold mb-4">
+                        {selectedEvent.title}
+                      </h2>
+                      <p className="text-neutral-300 mb-6">
+                        {selectedEvent.details}
+                      </p>
+                      {selectedEvent.highlights &&
+                        selectedEvent.highlights.length > 0 && (
+                          <div className="mt-4">
+                            <h4 className="text-lg font-semibold mb-2">
+                              Event Highlights
+                            </h4>
+                            <ul className="list-disc list-inside text-neutral-400">
+                              {selectedEvent.highlights.map(
+                                (highlight, index) => (
+                                  <li key={index}>{highlight}</li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+                        )}
                     </div>
 
                     <div className="md:w-1/3 bg-neutral-800/50 rounded-xl p-6 space-y-4">
@@ -282,7 +307,7 @@ const InteractiveGallery = () => {
                           <p className="text-white">{selectedEvent.date}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-blue-400" />
                         <div>
@@ -290,12 +315,16 @@ const InteractiveGallery = () => {
                           <p className="text-white">{selectedEvent.location}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-3">
                         <Users className="h-5 w-5 text-blue-400" />
                         <div>
-                          <h4 className="text-sm text-neutral-400">Attendees</h4>
-                          <p className="text-white">{selectedEvent.attendees}+ guests</p>
+                          <h4 className="text-sm text-neutral-400">
+                            Attendees
+                          </h4>
+                          <p className="text-white">
+                            {selectedEvent.attendees}+ guests
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -303,7 +332,9 @@ const InteractiveGallery = () => {
 
                   {/* Image Thumbnails */}
                   <div className="mt-8">
-                    <h3 className="text-xl font-semibold mb-4">Event Gallery</h3>
+                    <h3 className="text-xl font-semibold mb-4">
+                      Event Gallery
+                    </h3>
                     <div className="grid grid-cols-3 gap-4">
                       {selectedEvent.images.map((image, index) => (
                         <div
@@ -363,7 +394,9 @@ const InteractiveGallery = () => {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
                   src={selectedEvent.images[currentImageIndex]}
-                  alt={`${selectedEvent.title} - Image ${currentImageIndex + 1}`}
+                  alt={`${selectedEvent.title} - Image ${
+                    currentImageIndex + 1
+                  }`}
                   className="max-w-full max-h-full object-contain"
                 />
               </AnimatePresence>
