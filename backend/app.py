@@ -243,30 +243,10 @@ if not RESEND_API_KEY:
 
 resend.api_key = RESEND_API_KEY
 
-# Email sender configuration
-# Option 1: Use Resend sandbox domain for testing (works immediately)
-EMAIL_FROM = "E&S Decorations <onboarding@resend.dev>"
-
-# Option 2: Use your own verified domain (uncomment when you have one)
-# EMAIL_FROM = "E&S Decorations <noreply@yourdomain.com>"
-
-# Option 3: Use Gmail (won't work - Gmail domains can't be verified)
-# EMAIL_FROM = "E&S Decorations <esdecorationsind@gmail.com>"
+EMAIL_FROM = "E&S Decorations <noreply@esdecorations.in>"
 
 EMAIL_FROM_NAME = "E&S Decorations"
 
-# REMOVED: Old email configuration
-# email_conf = ConnectionConfig(
-#     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-#     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-#     MAIL_FROM=os.getenv("MAIL_FROM"),
-#     MAIL_PORT=int(os.getenv("MAIL_PORT", "587")),
-#     MAIL_SERVER=os.getenv("MAIL_SERVER"),
-#     MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME"),
-#     MAIL_STARTTLS=True,
-#     MAIL_SSL_TLS=False,
-#     USE_CREDENTIALS=True
-# )
 
 # Constants
 SECRET_KEY = os.getenv("SECRET_KEY", "miniproject")
