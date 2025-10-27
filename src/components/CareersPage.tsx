@@ -4,6 +4,7 @@ import { ChefHat, Camera, Users, X } from "lucide-react";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { BackgroundBeams } from "./ui/background-beams";
+import { SEO } from "./seo/SEO";
 
 interface JobListing {
   _id: string;
@@ -263,326 +264,342 @@ const CareersPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white">
-        <Navbar />
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <>
+        <SEO 
+          title="Careers - Join Our Team"
+          description="Join ES Decorations team! We're hiring for catering staff, photographers, videographers, and event coordinators."
+          keywords="event jobs Kottayam, catering jobs Kerala, photographer jobs, event coordinator careers"
+          url="https://www.esdecorations.in/careers"
+        />
+        <div className="min-h-screen bg-black text-white">
+          <Navbar />
+          <div className="flex justify-center items-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <div className="relative pt-20">
-        <BackgroundBeams className="opacity-20" />
-        <div className="container-width relative z-10 px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
-              Join Our Team
-            </h1>
-            <p className="text-neutral-400 max-w-2xl mx-auto">
-              Be part of something extraordinary. We're looking for talented
-              individuals to join our growing team.
-            </p>
-          </motion.div>
+    <>
+      <SEO 
+        title="Careers - Join Our Team"
+        description="Join ES Decorations team! We're hiring for catering staff, photographers, videographers, and event coordinators. Build your career in the event management industry in Kottayam, Kerala."
+        keywords="event jobs Kottayam, catering jobs Kerala, photographer jobs, event coordinator careers, hospitality jobs Pampady"
+        url="https://www.esdecorations.in/careers"
+      />
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <div className="relative pt-20">
+          <BackgroundBeams className="opacity-20" />
+          <div className="container-width relative z-10 px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-16"
+            >
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
+                Join Our Team
+              </h1>
+              <p className="text-neutral-400 max-w-2xl mx-auto">
+                Be part of something extraordinary. We're looking for talented
+                individuals to join our growing team.
+              </p>
+            </motion.div>
 
-          {error ? (
-            <div className="text-center text-red-500 py-10">{error}</div>
-          ) : jobs.length === 0 ? (
-            <div className="text-center text-neutral-400 py-10">
-              No job openings available at the moment.
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pb-20">
-              {jobs.map((job, index) => {
-                const IconComponent = getIconComponent(job.icon);
-                return (
-                  <motion.div
-                    key={job._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ y: -10 }}
-                    className="group cursor-pointer"
-                    onClick={() => {
-                      setSelectedJob(job._id);
-                      setFormData({ ...formData, jobId: job.id });
-                      setFormErrors({});
-                      setFileError("");
-                    }}
-                  >
-                    <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl overflow-hidden hover:border-neutral-700 transition-colors">
-                      <div className="p-6">
-                        <IconComponent className="w-10 h-10 text-blue-500 mb-4" />
-                        <h3 className="text-xl font-semibold mb-2">
-                          {job.title}
-                        </h3>
-                        <p className="text-neutral-400 mb-4">
-                          {job.description}
-                        </p>
-                        <div className="mb-6">
-                          <h4 className="text-sm font-semibold text-neutral-300 mb-2">
-                            Requirements:
-                          </h4>
-                          <ul className="space-y-2">
-                            {job.requirements.map((req, i) => (
-                              <li
-                                key={i}
-                                className="text-sm text-neutral-400 flex items-start"
-                              >
-                                <span className="text-blue-500 mr-2">•</span>
-                                {req}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="flex justify-between items-center text-sm text-neutral-500">
-                          <span>{job.type}</span>
-                          <span className="text-green-500">Active</span>
+            {error ? (
+              <div className="text-center text-red-500 py-10">{error}</div>
+            ) : jobs.length === 0 ? (
+              <div className="text-center text-neutral-400 py-10">
+                No job openings available at the moment.
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pb-20">
+                {jobs.map((job, index) => {
+                  const IconComponent = getIconComponent(job.icon);
+                  return (
+                    <motion.div
+                      key={job._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ y: -10 }}
+                      className="group cursor-pointer"
+                      onClick={() => {
+                        setSelectedJob(job._id);
+                        setFormData({ ...formData, jobId: job.id });
+                        setFormErrors({});
+                        setFileError("");
+                      }}
+                    >
+                      <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl overflow-hidden hover:border-neutral-700 transition-colors">
+                        <div className="p-6">
+                          <IconComponent className="w-10 h-10 text-blue-500 mb-4" />
+                          <h3 className="text-xl font-semibold mb-2">
+                            {job.title}
+                          </h3>
+                          <p className="text-neutral-400 mb-4">
+                            {job.description}
+                          </p>
+                          <div className="mb-6">
+                            <h4 className="text-sm font-semibold text-neutral-300 mb-2">
+                              Requirements:
+                            </h4>
+                            <ul className="space-y-2">
+                              {job.requirements.map((req, i) => (
+                                <li
+                                  key={i}
+                                  className="text-sm text-neutral-400 flex items-start"
+                                >
+                                  <span className="text-blue-500 mr-2">•</span>
+                                  {req}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="flex justify-between items-center text-sm text-neutral-500">
+                            <span>{job.type}</span>
+                            <span className="text-green-500">Active</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <AnimatePresence>
-        {selectedJob && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setSelectedJob(null);
-                setFormErrors({});
-                setFileError("");
-              }
-            }}
-          >
+        <AnimatePresence>
+          {selectedJob && (
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-neutral-900 rounded-xl p-6 max-w-md w-full relative"
-            >
-              <button
-                onClick={() => {
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
                   setSelectedJob(null);
                   setFormErrors({});
                   setFileError("");
-                }}
-                className="absolute right-4 top-4 text-neutral-400 hover:text-white"
+                }
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-neutral-900 rounded-xl p-6 max-w-md w-full relative"
               >
-                <X className="w-6 h-6" />
-              </button>
-
-              <h2 className="text-2xl font-bold mb-4">
-                Apply for {jobs.find((j) => j._id === selectedJob)?.title}
-              </h2>
-
-              {submitStatus.type && (
-                <div
-                  className={`mb-4 p-3 rounded-lg ${
-                    submitStatus.type === "success"
-                      ? "bg-green-500/10 text-green-500"
-                      : "bg-red-500/10 text-red-500"
-                  }`}
+                <button
+                  onClick={() => {
+                    setSelectedJob(null);
+                    setFormErrors({});
+                    setFileError("");
+                  }}
+                  className="absolute right-4 top-4 text-neutral-400 hover:text-white"
                 >
-                  {submitStatus.message}
-                </div>
-              )}
+                  <X className="w-6 h-6" />
+                </button>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => {
-                      setFormData({ ...formData, name: e.target.value });
-                      if (formErrors.name) {
-                        setFormErrors((prev) => ({ ...prev, name: undefined }));
-                      }
-                    }}
-                    className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                      formErrors.name ? "border-red-500" : "border-neutral-700"
+                <h2 className="text-2xl font-bold mb-4">
+                  Apply for {jobs.find((j) => j._id === selectedJob)?.title}
+                </h2>
+
+                {submitStatus.type && (
+                  <div
+                    className={`mb-4 p-3 rounded-lg ${
+                      submitStatus.type === "success"
+                        ? "bg-green-500/10 text-green-500"
+                        : "bg-red-500/10 text-red-500"
                     }`}
-                  />
-                  {formErrors.name && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {formErrors.name}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => {
-                      setFormData({ ...formData, email: e.target.value });
-                      if (formErrors.email) {
-                        setFormErrors((prev) => ({
-                          ...prev,
-                          email: undefined,
-                        }));
-                      }
-                    }}
-                    className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                      formErrors.email ? "border-red-500" : "border-neutral-700"
-                    }`}
-                  />
-                  {formErrors.email && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {formErrors.email}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => {
-                      const value = e.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 10);
-                      setFormData({ ...formData, phone: value });
-                      if (formErrors.phone) {
-                        setFormErrors((prev) => ({
-                          ...prev,
-                          phone: undefined,
-                        }));
-                      }
-                    }}
-                    className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                      formErrors.phone ? "border-red-500" : "border-neutral-700"
-                    }`}
-                  />
-                  {formErrors.phone && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {formErrors.phone}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-300 mb-1">
-                    Age
-                  </label>
-                  <input
-                    type="number"
-                    min="18"
-                    max="60"
-                    value={formData.experience}
-                    onChange={(e) => {
-                      setFormData({ ...formData, experience: e.target.value });
-                      if (formErrors.experience) {
-                        setFormErrors((prev) => ({
-                          ...prev,
-                          experience: undefined,
-                        }));
-                      }
-                    }}
-                    className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-                      formErrors.experience
-                        ? "border-red-500"
-                        : "border-neutral-700"
-                    }`}
-                  />
-                  {formErrors.experience && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {formErrors.experience}
-                    </p>
-                  )}
-                </div>
-
-                {formData.jobId === "catering" ? (
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-1">
-                      Address
-                    </label>
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => {
-                        setFormData({ ...formData, address: e.target.value });
-                        if (formErrors.address) {
-                          setFormErrors((prev) => ({
-                            ...prev,
-                            address: undefined,
-                          }));
-                        }
-                      }}
-                      className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-24 ${
-                        formErrors.address
-                          ? "border-red-500"
-                          : "border-neutral-700"
-                      }`}
-                    />
-                    {formErrors.address && (
-                      <p className="mt-1 text-sm text-red-500">
-                        {formErrors.address}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-1">
-                      Resume
-                    </label>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleFileChange}
-                      className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 ${
-                        formErrors.resume || fileError
-                          ? "border-red-500"
-                          : "border-neutral-700"
-                      }`}
-                    />
-                    {(fileError || formErrors.resume) && (
-                      <p className="mt-1 text-sm text-red-500">
-                        {fileError || formErrors.resume}
-                      </p>
-                    )}
+                  >
+                    {submitStatus.message}
                   </div>
                 )}
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Application"}
-                </motion.button>
-              </form>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => {
+                        setFormData({ ...formData, name: e.target.value });
+                        if (formErrors.name) {
+                          setFormErrors((prev) => ({ ...prev, name: undefined }));
+                        }
+                      }}
+                      className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        formErrors.name ? "border-red-500" : "border-neutral-700"
+                      }`}
+                    />
+                    {formErrors.name && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {formErrors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => {
+                        setFormData({ ...formData, email: e.target.value });
+                        if (formErrors.email) {
+                          setFormErrors((prev) => ({
+                            ...prev,
+                            email: undefined,
+                          }));
+                        }
+                      }}
+                      className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        formErrors.email ? "border-red-500" : "border-neutral-700"
+                      }`}
+                    />
+                    {formErrors.email && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {formErrors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        const value = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 10);
+                        setFormData({ ...formData, phone: value });
+                        if (formErrors.phone) {
+                          setFormErrors((prev) => ({
+                            ...prev,
+                            phone: undefined,
+                          }));
+                        }
+                      }}
+                      className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        formErrors.phone ? "border-red-500" : "border-neutral-700"
+                      }`}
+                    />
+                    {formErrors.phone && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {formErrors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-300 mb-1">
+                      Age
+                    </label>
+                    <input
+                      type="number"
+                      min="18"
+                      max="60"
+                      value={formData.experience}
+                      onChange={(e) => {
+                        setFormData({ ...formData, experience: e.target.value });
+                        if (formErrors.experience) {
+                          setFormErrors((prev) => ({
+                            ...prev,
+                            experience: undefined,
+                          }));
+                        }
+                      }}
+                      className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        formErrors.experience
+                          ? "border-red-500"
+                          : "border-neutral-700"
+                      }`}
+                    />
+                    {formErrors.experience && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {formErrors.experience}
+                      </p>
+                    )}
+                  </div>
+
+                  {formData.jobId === "catering" ? (
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-300 mb-1">
+                        Address
+                      </label>
+                      <textarea
+                        value={formData.address}
+                        onChange={(e) => {
+                          setFormData({ ...formData, address: e.target.value });
+                          if (formErrors.address) {
+                            setFormErrors((prev) => ({
+                              ...prev,
+                              address: undefined,
+                            }));
+                          }
+                        }}
+                        className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-24 ${
+                          formErrors.address
+                            ? "border-red-500"
+                            : "border-neutral-700"
+                        }`}
+                      />
+                      {formErrors.address && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {formErrors.address}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-300 mb-1">
+                        Resume
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleFileChange}
+                        className={`w-full px-3 py-2 bg-neutral-800 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 ${
+                          formErrors.resume || fileError
+                            ? "border-red-500"
+                            : "border-neutral-700"
+                        }`}
+                      />
+                      {(fileError || formErrors.resume) && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {fileError || formErrors.resume}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-violet-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Submitting..." : "Submit Application"}
+                  </motion.button>
+                </form>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </>
   );
 };
 

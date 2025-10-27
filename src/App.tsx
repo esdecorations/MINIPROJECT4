@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SEO } from "./components/seo/SEO";
 import {
   BrowserRouter as Router,
   Routes,
@@ -55,31 +56,39 @@ const MainPage = () => {
   }, [location.hash]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.5 }}
-      className="bg-black text-white relative"
-    >
-      <ParticlesBackground />
-      <Navbar />
-      <HeroSection />
-      <div id="about-us">
-        <AboutSection />
-      </div>
-      <div id="latest-work">
-        <LatestSection />
-      </div>
-      <div id="services">
-        <ServicesSection />
-      </div>
-      <div id="our-team">
-        <TeamSection />
-      </div>
-      <div id="contact">
-        <ContactSection />
-      </div>
-    </motion.div>
+    <>
+      <SEO 
+        title="ES Decorations - Premium Event Management & Catering Services"
+        description="Transform your events with ES Decorations in Pampady, Kottayam. Premium catering, wedding decorations, event management, photography, and entertainment solutions since 1995."
+        keywords="event management Kottayam, catering services Pampady, wedding decoration Kerala, corporate events, photography videography, balloon art, henna services"
+        url="https://www.esdecorations.in"
+      />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="bg-black text-white relative"
+      >
+        <ParticlesBackground />
+        <Navbar />
+        <HeroSection />
+        <div id="about-us">
+          <AboutSection />
+        </div>
+        <div id="latest-work">
+          <LatestSection />
+        </div>
+        <div id="services">
+          <ServicesSection />
+        </div>
+        <div id="our-team">
+          <TeamSection />
+        </div>
+        <div id="contact">
+          <ContactSection />
+        </div>
+      </motion.div>
+    </>
   );
 };
 
